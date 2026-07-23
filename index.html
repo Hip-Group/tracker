@@ -6,7 +6,20 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HIP Group">
-<meta name="theme-color" content="#07070f">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" id="m-theme-color" content="#07070f">
+<script>
+(function(){
+  var p=localStorage.getItem('hip_ap')||'system';
+  var dark=p==='dark'||(p==='system'&&window.matchMedia('(prefers-color-scheme:dark)').matches);
+  document.documentElement.dataset.theme=dark?'dark':'light';
+  document.documentElement.dataset.themePref=p;
+  var m=document.getElementById('m-theme-color');
+  if(m)m.content=dark?'#11172A':'#F7F9FC';
+})();
+</script>
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%2307070f'/%3E%3Ctext x='96' y='140' font-size='110' text-anchor='middle'%3E%F0%9F%92%8E%3C/text%3E%3C/svg%3E">
 
 <title>The HIP Group Tracking Sheet</title>
@@ -15,59 +28,255 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
-:root{--bg:#07070f;--s1:#0e0e1c;--s2:#151526;--s3:#1c1c32;--bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.13);--red:#e8455a;--gold:#f5c842;--green:#3dd68c;--blue:#5eaeff;--purple:#a78bfa;--txt:#eeeef8;--txt2:#9898b8;--txt3:#4e4e6e;--r:14px;--r2:10px;--ff:"DM Sans",sans-serif}
+
+/* ── RED RUNNER THEME ─────────────────────────────────────────────────────── */
+:root {
+  --rr-bg: #0a0305;
+  --rr-panel: #1a0a0e;
+  --rr-red: #c0112b;
+  --rr-bright: #ff1a35;
+  --rr-glow: rgba(255,26,53,.18);
+  --rr-text: #f0e8e8;
+  --rr-muted: #9a8a8a;
+  --rr-border: rgba(192,17,43,.4);
+}
+.rr-active .hdr {
+  background: var(--rr-panel);
+  border-bottom: 1px solid var(--rr-border);
+  box-shadow: 0 2px 20px var(--rr-glow);
+}
+.rr-header-wrap {
+  position: relative;
+  overflow: hidden;
+  background: var(--rr-bg);
+  border-radius: var(--r);
+  margin-bottom: 14px;
+  border: 1px solid var(--rr-border);
+  box-shadow: 0 0 28px var(--rr-glow);
+}
+.rr-header-bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(160deg, #1a0005 0%, #0a0305 40%, #1a0008 100%);
+  z-index: 0;
+}
+.rr-header-bg::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(192,17,43,.35) 0%, transparent 70%);
+}
+.rr-header-content {
+  position: relative; z-index: 1;
+  padding: 20px 18px 16px;
+}
+.rr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--rr-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  box-shadow: 0 0 12px rgba(192,17,43,.5);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rr-badge {
+    animation: rr-pulse 2.8s ease-in-out infinite;
+  }
+  @keyframes rr-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(192,17,43,.5); }
+    50% { box-shadow: 0 0 22px rgba(255,26,53,.8); }
+  }
+}
+.rr-name {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--rr-text);
+  margin-bottom: 4px;
+}
+.rr-dates {
+  font-size: 11px;
+  color: var(--rr-muted);
+  margin-bottom: 10px;
+}
+.rr-week {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rr-bright);
+}
+.rr-motto {
+  font-size: 11px;
+  color: var(--rr-muted);
+  font-style: italic;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.rr-upcoming-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(192,17,43,.15);
+  color: var(--rr-bright);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(192,17,43,.3);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+/* Admin/Mentor RR list rows */
+.rr-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  background: var(--rr-panel);
+  border: 1px solid var(--rr-border);
+  border-radius: var(--r2);
+  margin-bottom: 8px;
+}
+.rr-row-status {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+.rr-status-active   { background: rgba(192,17,43,.2); color: var(--rr-bright); }
+.rr-status-upcoming { background: rgba(245,200,66,.15); color: var(--gold); }
+.rr-status-completed{ background: rgba(61,214,140,.12); color: var(--green); }
+.rr-status-cancelled{ background: var(--s3); color: var(--txt3); }
+/* RR allocation form */
+.rr-form {
+  background: var(--rr-panel);
+  border: 1px solid var(--rr-border);
+  border-radius: var(--r);
+  padding: 18px;
+  margin-top: 14px;
+}
+
+/* ── FEAT-007 THEME SYSTEM ─────────────────────────────────────────────────── */
+/* Shared non-colour tokens */
+:root{
+  --r:14px;--r2:10px;--ff:"DM Sans",sans-serif;
+  /* Status colours — intentional feature colours, not themed */
+  --red:#e8455a;--gold:#f5c842;--green:#3dd68c;
+  --blue:#5eaeff;--purple:#a78bfa;
+  /* Brand */
+  --brand-primary:#34439E;--brand-secondary:#02A1E2;--brand-accent:#CCD42F;
+}
+
+/* ── DARK MODE (default) ─────────────────────────────────────────────────── */
+:root,[data-theme="dark"]{
+  /* Backgrounds */
+  --bg:#11172A;     /* page */
+  --s1:#19213A;     /* cards, nav */
+  --s2:#222C48;     /* inputs, secondary bg */
+  --s3:#26314F;     /* elevated, tertiary */
+  --s4:#202A44;     /* input fill */
+  --bg-disabled:#28324D;
+  /* Borders */
+  --bd:rgba(255,255,255,.09);   /* --border-default */
+  --bd2:rgba(255,255,255,.16);  /* --border-strong */
+  /* Text */
+  --txt:#F4F7FC;    /* primary */
+  --txt2:#C3CBDA;   /* secondary */
+  --txt3:#9BA7BB;   /* muted */
+  --txt4:#78859A;   /* disabled */
+  /* Metric/status colours for dark */
+  --red:#e8455a;--gold:#f5c842;--green:#3dd68c;
+  --blue:#5eaeff;--purple:#a78bfa;
+  /* Shadows */
+  --shadow:rgba(0,0,0,.5);
+  /* Theme colour for meta tag */
+  --theme-color:#11172A;
+}
+
+/* ── LIGHT MODE ──────────────────────────────────────────────────────────── */
+[data-theme="light"]{
+  /* Backgrounds */
+  --bg:#F7F9FC;
+  --s1:#FFFFFF;
+  --s2:#EEF4FA;
+  --s3:#E4EDF6;
+  --s4:#FFFFFF;
+  --bg-disabled:#E8EDF3;
+  /* Borders */
+  --bd:rgba(0,0,0,.1);
+  --bd2:rgba(0,0,0,.18);
+  /* Text */
+  --txt:#1D2740;
+  --txt2:#536078;
+  --txt3:#6F7B91;
+  --txt4:#8A95A8;
+  /* Metric/status — deeper for light bg readability */
+  --red:#C9283E;--gold:#9A6E00;--green:#1B7A3E;
+  --blue:#1A6FC4;--purple:#5B48B8;
+  /* Shadows */
+  --shadow:rgba(52,67,158,.12);
+  --theme-color:#F7F9FC;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;font-family:var(--ff)}
-body{background:var(--bg);color:var(--txt);display:flex;flex-direction:column}
+body{background:var(--bg);color:var(--txt);display:flex;flex-direction:column;transition:background .25s,color .25s}
 #app{flex:1;overflow:hidden;position:relative}
-.scr{position:absolute;inset:0;overflow-y:auto;display:flex;flex-direction:column;transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;-webkit-overflow-scrolling:touch;z-index:1}
+.scr{position:absolute;inset:0;transition:background .25s;overflow-y:auto;display:flex;flex-direction:column;transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;-webkit-overflow-scrolling:touch;z-index:1}
 .scr.off{transform:translateX(106%);opacity:0;pointer-events:none;visibility:hidden}
 ::-webkit-scrollbar{width:2px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--s1);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10;flex-shrink:0}
 .hdr-title{font-size:17px;font-weight:800}
-.hdr-btn{width:36px;height:36px;background:var(--s2);border:1px solid var(--bd);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;transition:background .15s;flex-shrink:0}
+.hdr-btn{width:36px;height:36px;background:var(--s3);border:1px solid var(--bd);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;transition:background .15s;flex-shrink:0}
 .hdr-btn:active{background:var(--s3)}
 #bnav{display:none;background:var(--s1);border-top:1px solid var(--bd);padding:6px 0 max(6px,env(safe-area-inset-bottom));flex-shrink:0}
 .nrow{display:flex;justify-content:space-around}
 .ni{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 12px;cursor:pointer;position:relative;min-width:44px}
-.ni-ico{font-size:20px;transition:transform .2s}.ni-lbl{font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.03em}
+.ni-ico{font-size:20px;transition:transform .2s}.ni-lbl{font-size:9px;font-weight:600;color:var(--txt2);letter-spacing:.03em}
 .ni.on .ni-lbl{color:var(--red)}.ni.on .ni-ico{transform:scale(1.1)}
 .ni-dot{position:absolute;top:4px;right:4px;min-width:14px;height:14px;background:var(--red);border-radius:8px;font-size:9px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 20px;border:none;border-radius:var(--r2);font-family:var(--ff);font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
 .btn:active{transform:scale(.95)}
 .btn-p{background:linear-gradient(135deg,var(--red),#b01c36);color:#fff;box-shadow:0 4px 18px rgba(232,69,90,.3)}
-.btn-s{background:var(--s3);color:var(--txt);border:1px solid var(--bd2)}
-.btn-g{background:transparent;color:var(--txt2);border:1px solid var(--bd)}
+.btn-s{background:var(--s3);color:var(--txt);border:1px solid var(--bd)}
+.btn-g{background:var(--s2);color:var(--txt2);border:1px solid var(--bd)}
 .btn-go{background:linear-gradient(135deg,var(--gold),#c89010);color:#000}
 .btn-purple{background:linear-gradient(135deg,var(--purple),#6644cc);color:#fff}
 .btn-w{width:100%}.btn-lg{padding:14px 24px;font-size:15px;border-radius:var(--r)}
-.inp{width:100%;padding:13px 15px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r2);color:var(--txt);font-family:var(--ff);font-size:15px;outline:none;transition:border-color .2s}
+.inp{width:100%;padding:13px 15px;background:var(--s4);border:1px solid var(--bd);border-radius:var(--r2);color:var(--txt);font-family:var(--ff);font-size:15px;outline:none;transition:border-color .2s}
 .inp:focus{border-color:var(--red)}
 select.inp{cursor:pointer;-webkit-appearance:none}
-.lbl{display:block;font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.09em;margin-bottom:5px}
+.lbl{display:block;font-size:11px;font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:.09em;margin-bottom:5px}
 .card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:18px}
-.sec{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .sec::after{content:"";flex:1;height:1px;background:var(--bd)}
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mc{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;transition:all .25s;position:relative}
 .mc.hit{border-color:rgba(61,214,140,.3);background:rgba(61,214,140,.04)}
 .mc.over{border-color:rgba(245,200,66,.4);background:rgba(245,200,66,.04)}
 .mc.bottleneck{border-color:rgba(232,69,90,.5);background:rgba(232,69,90,.06)}
-.mc-ico{font-size:20px;margin-bottom:6px}.mc-lbl{font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em}
-.mc-val{font-size:30px;font-weight:900;line-height:1;margin:4px 0}.mc-gl{font-size:11px;color:var(--txt3)}.mc-pct{font-size:13px;font-weight:800;margin-top:4px}
-.mc-bar{height:3px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:8px;overflow:hidden}
+.mc-ico{font-size:20px;margin-bottom:6px}.mc-lbl{font-size:10px;font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:.08em}
+.mc-val{font-size:30px;font-weight:900;line-height:1;margin:4px 0}.mc-gl{font-size:11px;color:var(--txt2)}.mc-pct{font-size:13px;font-weight:800;margin-top:4px}
+.mc-bar{height:3px;background:var(--bd);border-radius:2px;margin-top:8px;overflow:hidden}
 .mc-fill{height:100%;border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
 .mc-btns{display:flex;gap:6px;margin-top:10px}
 .mc-plus{flex:1;height:40px;background:var(--red);border:none;border-radius:8px;color:#fff;font-size:22px;font-weight:800;cursor:pointer;font-family:var(--ff);transition:all .15s}
 .mc-plus:active{transform:scale(.92)}
-.mc-min{width:40px;height:40px;background:var(--s3);border:1px solid var(--bd);border-radius:8px;color:var(--txt2);font-size:16px;cursor:pointer;font-family:var(--ff)}
+.mc-min{width:40px;height:40px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;color:var(--txt2);font-size:16px;cursor:pointer;font-family:var(--ff)}
 .mc-min:active{background:rgba(232,69,90,.2)}.mc-min:disabled{opacity:.2;cursor:default}
 .bn-badge{position:absolute;top:8px;right:8px;font-size:9px;font-weight:800;background:var(--red);color:#fff;padding:2px 6px;border-radius:8px}
 .pdots{display:flex;gap:12px;justify-content:center;margin:18px 0}
-.pd{width:14px;height:14px;border-radius:50%;border:2px solid var(--bd2);transition:all .2s}
+.pd{width:14px;height:14px;border-radius:50%;border:2px solid var(--bd2);background:var(--s2);transition:all .2s}
 .pd.on{background:var(--red);border-color:var(--red);transform:scale(1.15)}
 .ppad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:260px;margin:0 auto}
-.pk{height:66px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r2);font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--ff);color:var(--txt);transition:all .15s}
+.pk{height:66px;background:var(--s4);border:1px solid var(--bd);border-radius:var(--r2);font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--ff);color:var(--txt);transition:all .15s}
 .pk:active{background:var(--s3);transform:scale(.92)}.pk.emp{background:transparent;border-color:transparent;pointer-events:none}
 .shake{animation:shake .35s}
 .tbar{display:flex;gap:4px;padding:10px 14px;background:var(--s1);border-bottom:1px solid var(--bd);overflow-x:auto;flex-shrink:0}
@@ -96,6 +305,7 @@ select.inp{cursor:pointer;-webkit-appearance:none}
 .tm-pct{font-size:12px;font-weight:800;width:36px;text-align:right}
 .drow{display:flex;align-items:center;gap:11px;padding:13px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r2);margin-bottom:7px;cursor:pointer;transition:background .15s}
 .drow:active{background:var(--s3)}
+.cg-section-hdr{font-size:11px;font-weight:800;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;padding:10px 0 6px;border-bottom:1px solid var(--bd);margin-bottom:8px;}
 .gitem{display:flex;align-items:center;gap:10px;padding:13px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r2);margin-bottom:7px}
 .ginps input{width:64px;padding:8px;background:var(--s3);border:1px solid var(--bd);border-radius:8px;color:var(--txt);font-family:var(--ff);font-size:14px;font-weight:700;outline:none;text-align:center}
 .ginps input:focus{border-color:var(--red)}
@@ -143,6 +353,46 @@ select.inp{cursor:pointer;-webkit-appearance:none}
 .period-btn{padding:8px 14px;border-radius:18px;font-size:12px;font-weight:700;border:1px solid var(--bd);color:var(--txt2);background:transparent;cursor:pointer;font-family:var(--ff);transition:all .2s}
 .period-btn.on{background:var(--red);color:#fff;border-color:transparent}
 .av-pic{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--bd2)}
+
+.db-q{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.db-q-num{font-size:10px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
+.db-q-text{font-size:14px;font-weight:700;margin-bottom:10px;line-height:1.4;}
+.db-q.answered{border-color:rgba(61,214,140,.25);background:rgba(61,214,140,.03);}
+
+/* ── SPEECH-TO-TEXT ─────────────────────────────────────────────────────────── */
+.stt-wrap{position:relative;}
+.stt-btn{position:absolute;bottom:8px;right:8px;width:32px;height:32px;border-radius:50%;border:none;background:var(--s3);color:var(--txt2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;transition:background .15s,color .15s;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+.stt-btn:hover{background:var(--s2);}
+.stt-btn.stt-active{background:rgba(232,69,90,.2);color:var(--red);animation:stt-pulse 1.2s ease-in-out infinite;}
+.stt-btn.stt-unsupported{display:none;}
+.stt-status{font-size:10px;font-weight:700;min-height:14px;margin-top:3px;padding-left:2px;transition:color .2s;}
+.stt-status.stt-listening{color:var(--red);}
+.stt-status.stt-ok{color:var(--green);}
+.stt-status.stt-err{color:var(--gold);}
+.db-ta-stt{padding-bottom:36px;} /* room for mic button */
+@keyframes stt-pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,69,90,.4);}50%{box-shadow:0 0 0 6px rgba(232,69,90,0);}}
+@media (prefers-reduced-motion:reduce){.stt-btn.stt-active{animation:none;}}
+
+.db-ta{resize:none;font-size:14px;line-height:1.55;}
+.db-act{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--bd);}
+.db-act:last-child{border-bottom:none;}
+.db-act-txt{flex:1;font-size:13px;font-weight:600;}
+.db-act-added{font-size:9px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;padding:2px 5px;background:rgba(245,200,66,.12);border-radius:4px;flex-shrink:0;}
+.db-tick{width:36px;height:36px;border-radius:8px;border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .15s;flex-shrink:0;}
+.db-tick.tick-on{background:rgba(61,214,140,.15);border-color:var(--green);color:var(--green);}
+.db-tick.cross-on{background:rgba(232,69,90,.15);border-color:var(--red);color:var(--red);}
+.db-act10{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);}
+.db-act10:last-child{border-bottom:none;}
+.db-act10-txt{flex:1;font-size:13px;font-weight:600;}
+.db-ord{width:28px;height:28px;border-radius:6px;background:var(--s3);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--txt2);flex-shrink:0;}
+.db-list-row{display:flex;align-items:center;gap:12px;padding:14px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r2);margin-bottom:8px;cursor:pointer;transition:background .15s;}
+.db-list-row:active{background:var(--s3);}
+.db-list-status{font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
+.db-status-completed{background:rgba(61,214,140,.15);color:var(--green);}
+.db-status-draft{background:rgba(245,200,66,.15);color:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--red);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.4);}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--red);cursor:pointer;border:none;}
+
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
@@ -224,6 +474,12 @@ select.inp{cursor:pointer;-webkit-appearance:none}
 <div class="scr off" id="scr-admin">
   <div class="hdr"><div class="hdr-title">Admin Panel</div><span class="admin-badge">Admin</span></div>
   <div style="padding:14px;max-width:480px;margin:0 auto;width:100%;">
+    <!-- Red Runners management card -->
+    <div onclick="A.show('scr-rr-admin')" style="display:flex;align-items:center;gap:14px;padding:16px;background:var(--rr-panel);border:1px solid var(--rr-border);border-radius:var(--r);margin-bottom:16px;cursor:pointer;box-shadow:0 0 16px var(--rr-glow);">
+      <div style="font-size:28px;flex-shrink:0;">&#128100;</div>
+      <div style="flex:1;"><div style="font-size:15px;font-weight:800;color:var(--rr-text);">Red Runners</div><div style="font-size:12px;color:var(--rr-muted);margin-top:2px;">Allocate and manage Red Runner programmes.</div></div>
+      <div class="rr-badge" style="font-size:9px;padding:3px 8px;">MANAGE</div>
+    </div>
     <div class="sec">All Accounts</div>
     <div id="admin-list"></div>
     <div class="card" style="margin-top:16px;">
@@ -252,7 +508,7 @@ select.inp{cursor:pointer;-webkit-appearance:none}
     </div>
     <div style="display:flex;gap:7px;align-items:center;">
       <div class="hdr-btn" onclick="A.openShare()">&#128228;</div>
-      <div class="hdr-btn" onclick="A.show('scr-settings')">&#9881;</div>
+      <div class="hdr-btn" id="ap-toggle" onclick="A.toggleAppearance()" aria-label="Switch to dark mode" title="Switch appearance" style="font-size:15px;"></div><div class="hdr-btn" onclick="A.show('scr-settings')">&#9881;</div>
     </div>
   </div>
   <div style="padding:12px 14px 0;" id="quote-wrap"></div>
@@ -280,12 +536,16 @@ select.inp{cursor:pointer;-webkit-appearance:none}
         <span onclick="A.goToToday()" style="margin-left:8px;text-decoration:underline;cursor:pointer;color:var(--txt2);font-weight:600;">Back to today</span>
       </div>
       <div class="mgrid" id="today-grid"></div>
+      <div id="cg-track-wrap" style="display:none;margin-top:14px;">
+        <div class="sec">My Custom Goals</div>
+        <div id="cg-track-list"></div>
+      </div>
       <div style="margin-top:16px;"><div class="sec">7-Day Streak</div><div class="sbar" id="streak-bar"></div></div>
       <div style="margin-top:18px;"><div class="sec">Achievements</div><div class="alist" id="ach-list"></div></div>
     </div>
-    <div class="spg" id="pg-week"><div class="ch"><div class="ch-t">This Week</div><canvas id="ch-week"></canvas></div><div id="week-bn"></div><div id="week-stats"></div></div>
-    <div class="spg" id="pg-month"><div class="ch"><div class="ch-t">Weekly Trend</div><canvas id="ch-month"></canvas></div><div id="month-bn"></div><div id="month-stats"></div></div>
-    <div class="spg" id="pg-year"><div class="ch"><div class="ch-t">Monthly Trend</div><canvas id="ch-year"></canvas></div><div id="year-bn"></div><div id="year-stats"></div></div>
+    <div class="spg" id="pg-week"><div class="ch"><div class="ch-t">This Week</div><canvas id="ch-week"></canvas></div><div id="week-bn"></div><div id="week-stats"></div><div id="cg-week-stats"></div></div>
+    <div class="spg" id="pg-month"><div class="ch"><div class="ch-t">Weekly Trend</div><canvas id="ch-month"></canvas></div><div id="month-bn"></div><div id="month-stats"></div><div id="cg-month-stats"></div></div>
+    <div class="spg" id="pg-year"><div class="ch"><div class="ch-t">Monthly Trend</div><canvas id="ch-year"></canvas></div><div id="year-bn"></div><div id="year-stats"></div><div id="cg-year-stats"></div></div>
   </div></div>
 </div>
 
@@ -301,6 +561,12 @@ select.inp{cursor:pointer;-webkit-appearance:none}
 <!-- MENTOR -->
 <div class="scr off" id="scr-mentor">
   <div class="hdr"><div class="hdr-title">My Key Accounts</div><span class="mentor-badge">Mentor</span></div>
+  <!-- Red Runners management card — always visible to Mentor -->
+  <div onclick="A.show('scr-rr-admin')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--rr-panel);border-bottom:1px solid var(--rr-border);cursor:pointer;box-shadow:0 0 12px var(--rr-glow);">
+    <div style="font-size:24px;flex-shrink:0;">&#128100;</div>
+    <div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--rr-text);">Red Runners</div><div style="font-size:11px;color:var(--rr-muted);margin-top:1px;">Manage Red Runner programmes for eligible Members.</div></div>
+    <div class="rr-badge" style="font-size:9px;padding:3px 8px;">MANAGE</div>
+  </div>
   <div style="padding:14px;" id="mentor-body"></div>
 </div>
 
@@ -378,6 +644,25 @@ select.inp{cursor:pointer;-webkit-appearance:none}
       <div class="sec">My Goals</div><div id="goal-ed"></div>
       <button class="btn btn-p btn-w" style="margin-top:6px;" onclick="A.saveGoals()">Save Goals</button>
     </div>
+    <!-- Custom Goals -->
+    <div id="cg-section" style="margin-top:22px;">
+      <div class="sec">Custom Goals</div>
+      <div id="cg-list"></div>
+      <div id="cg-form" style="display:none;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-top:10px;">
+        <input type="hidden" id="cg-edit-id">
+        <div style="margin-bottom:10px;"><label class="lbl">Goal Name</label><input class="inp" id="cg-name" placeholder="e.g. Reading sessions" maxlength="50"></div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <div style="flex:1;"><label class="lbl">Target</label><input class="inp" type="number" id="cg-qty" placeholder="e.g. 7" min="1" max="999" style="text-align:center;"></div>
+          <div style="flex:2;"><label class="lbl">Duration</label><select class="inp" id="cg-period"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+        </div>
+        <div id="cg-err" style="display:none;color:var(--red);font-size:12px;font-weight:700;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-p btn-w" onclick="A.cgSave()">Save Goal</button>
+          <button class="btn btn-g" onclick="A.cgCancelForm()">Cancel</button>
+        </div>
+      </div>
+      <button class="btn btn-s btn-w" style="margin-top:10px;" onclick="A.cgShowForm()">+ Add Custom Goal</button>
+    </div>
     <div style="margin-top:22px;">
       <div class="sec">Daily Reminder</div>
       <div class="notif-row">
@@ -402,7 +687,17 @@ select.inp{cursor:pointer;-webkit-appearance:none}
       <div class="ppad" id="ch-pad"></div>
       <button class="btn btn-s btn-w" style="margin-top:12px;" onclick="A.savePIN()">Update PIN</button>
     </div>
-    <div id="admin-link-wrap" style="display:none;margin-top:22px;">
+    <!-- FEAT-007 Appearance -->
+    <div style="margin-top:22px;" id="appearance-section">
+      <div class="sec">Appearance</div>
+      <div role="group" aria-label="Appearance preference" style="display:flex;gap:8px;margin-bottom:8px;">
+        <button type="button" id="ap-btn-light"  class="btn btn-s" style="flex:1;font-size:12px;padding:9px 6px;" onclick="A.setAppearance('light')"  aria-pressed="false">&#9728; Light</button>
+        <button type="button" id="ap-btn-dark"   class="btn btn-s" style="flex:1;font-size:12px;padding:9px 6px;" onclick="A.setAppearance('dark')"   aria-pressed="false">&#9790; Dark</button>
+        <button type="button" id="ap-btn-system" class="btn btn-s" style="flex:1;font-size:11px;padding:9px 4px;" onclick="A.setAppearance('system')" aria-pressed="false">&#9681; Device</button>
+      </div>
+      <div style="font-size:11px;color:var(--txt3);">Device follows your system Light or Dark setting.</div>
+    </div>
+<div id="admin-link-wrap" style="display:none;margin-top:22px;">
       <div class="sec">Admin</div>
       <button class="btn btn-go btn-w" onclick="A.show('scr-admin')">Open Admin Panel</button>
     </div>
@@ -417,12 +712,228 @@ select.inp{cursor:pointer;-webkit-appearance:none}
   <div style="padding:14px;" id="pv-body"></div>
 </div>
 
+
+<!-- DAILY DEBRIEF -->
+<div class="scr off" id="scr-debrief">
+  <div class="hdr">
+    <div class="hdr-btn" onclick="A.goBack()">&#8592;</div>
+    <div style="flex:1;">
+      <div class="hdr-title" id="db-hdr-title">Daily Debrief</div>
+      <div id="db-hdr-date" style="font-size:10px;color:var(--txt3);margin-top:1px;"></div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <div class="hdr-btn" id="db-copy-btn" onclick="A.copyDebrief()" title="Copy debrief">&#128203;</div>
+      <div class="hdr-btn" id="db-save-btn" onclick="A.saveDebrief()" title="Save">&#10003;</div>
+    </div>
+  </div>
+
+  <!-- Status bar -->
+  <div id="db-status-bar" style="padding:8px 14px;background:var(--s2);border-bottom:1px solid var(--bd);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:space-between;">
+    <div id="db-status-lbl" style="color:var(--txt3);">Draft</div>
+    <div id="db-progress-lbl" style="color:var(--txt3);">0 / 12 answered</div>
+  </div>
+
+  <!-- Yesterday's action statement carry-forward -->
+  <div id="db-prev-stmt" style="display:none;margin:12px 14px 0;padding:12px 14px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:var(--r2);">
+    <div style="font-size:10px;font-weight:800;color:var(--purple);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">&#128197; Yesterday's Action Statement</div>
+    <div id="db-prev-stmt-text" style="font-size:13px;color:var(--txt2);line-height:1.6;font-style:italic;"></div>
+  </div>
+
+  <div style="padding:14px 14px 100px;" id="db-questions">
+
+    <!-- Q1: Mindset -->
+    <div class="db-q" id="dbq-1">
+      <div class="db-q-num">1</div>
+      <div class="db-q-text">How was my mindset and attitude today?</div>
+      <div class="stt-wrap"><textarea class="inp db-ta db-ta-stt" id="db-a1" placeholder="Reflect on your mindset and attitude..." rows="3" oninput="A.dbChange()"></textarea><button type="button" class="stt-btn" id="stt-btn-db-a1" onclick="A.sttToggle('db-a1')" aria-label="Start voice input for Q1 — Mindset and attitude">&#127908;</button><div class="stt-status" id="stt-status-db-a1"></div></div>
+    </div>
+
+    <!-- Q2: Score -->
+    <div class="db-q" id="dbq-2">
+      <div class="db-q-num">2</div>
+      <div class="db-q-text">Please score yourself between 1 and 10, with 10 being excellent, based on your performance today.</div>
+      <div style="padding:14px 0 6px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:11px;color:var(--txt3);">1 &mdash; Poor</span>
+          <div id="db-score-display" style="font-size:28px;font-weight:900;color:var(--red);">&#8212;</div>
+          <span style="font-size:11px;color:var(--txt3);">10 &mdash; Excellent</span>
+        </div>
+        <input type="range" id="db-a2" min="1" max="10" step="1" style="width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:var(--s3);outline:none;cursor:pointer;" oninput="A.dbScoreChange(this.value)" onchange="A.dbScoreChange(this.value)" data-touched="false">
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:9px;color:var(--txt3);">1</span><span style="font-size:9px;color:var(--txt3);">2</span><span style="font-size:9px;color:var(--txt3);">3</span><span style="font-size:9px;color:var(--txt3);">4</span><span style="font-size:9px;color:var(--txt3);">5</span><span style="font-size:9px;color:var(--txt3);">6</span><span style="font-size:9px;color:var(--txt3);">7</span><span style="font-size:9px;color:var(--txt3);">8</span><span style="font-size:9px;color:var(--txt3);">9</span><span style="font-size:9px;color:var(--txt3);">10</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q3: Conditional improvement -->
+    <div class="db-q" id="dbq-3" style="display:none;">
+      <div class="db-q-num">3</div>
+      <div class="db-q-text">If you did not score yourself a 10, what do you need to improve to achieve a score of 10?</div>
+      <div class="stt-wrap"><textarea class="inp db-ta db-ta-stt" id="db-a3" placeholder="What would take your performance to a 10?" rows="3" oninput="A.dbChange()"></textarea><button type="button" class="stt-btn" id="stt-btn-db-a3" onclick="A.sttToggle('db-a3')" aria-label="Start voice input for Q3 — What to improve">&#127908;</button><div class="stt-status" id="stt-status-db-a3"></div></div>
+    </div>
+
+    <!-- Q4: Learning -->
+    <div class="db-q" id="dbq-4">
+      <div class="db-q-num">4</div>
+      <div class="db-q-text">What did I learn from audios and books today?</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">Books, audiobooks, podcasts, training audios, or other personal-development material.</div>
+      <div class="stt-wrap"><textarea class="inp db-ta db-ta-stt" id="db-a4" placeholder="Share your key learning..." rows="3" oninput="A.dbChange()"></textarea><button type="button" class="stt-btn" id="stt-btn-db-a4" onclick="A.sttToggle('db-a4')" aria-label="Start voice input for Q4 — Learning">&#127908;</button><div class="stt-status" id="stt-status-db-a4"></div></div>
+    </div>
+
+    <!-- Q5: Completion (manually answered) -->
+    <div class="db-q" id="dbq-5">
+      <div class="db-q-num">5</div>
+      <div class="db-q-text">Did I complete my top actions for the day?</div>
+      <div style="display:flex;gap:10px;">
+        <div id="db-a5-yes" onclick="A.dbSetQ5('yes')" style="flex:1;padding:12px;border-radius:var(--r2);border:2px solid var(--bd);background:var(--s2);text-align:center;font-size:15px;font-weight:800;color:var(--txt3);cursor:pointer;">&#10003; Yes</div>
+        <div id="db-a5-no" onclick="A.dbSetQ5('no')" style="flex:1;padding:12px;border-radius:var(--r2);border:2px solid var(--bd);background:var(--s2);text-align:center;font-size:15px;font-weight:800;color:var(--txt3);cursor:pointer;">&#10007; No</div>
+      </div>
+    </div>
+
+    <!-- Q6: Roadblock -->
+    <div class="db-q" id="dbq-6">
+      <div class="db-q-num">6</div>
+      <div class="db-q-text">What was my biggest roadblock today, and what can I do to improve this tomorrow?</div>
+      <div class="stt-wrap"><textarea class="inp db-ta db-ta-stt" id="db-a6" placeholder="Describe your roadblock and how you will improve..." rows="4" oninput="A.dbChange()"></textarea><button type="button" class="stt-btn" id="stt-btn-db-a6" onclick="A.sttToggle('db-a6')" aria-label="Start voice input for Q6 — Roadblock">&#127908;</button><div class="stt-status" id="stt-status-db-a6"></div></div>
+    </div>
+
+    <!-- Q7: Comfort zone -->
+    <div class="db-q" id="dbq-7">
+      <div class="db-q-num">7</div>
+      <div class="db-q-text">What did I do today to push myself or move outside my comfort zone?</div>
+      <div class="stt-wrap"><textarea class="inp db-ta db-ta-stt" id="db-a7" placeholder="How did you stretch yourself today?" rows="3" oninput="A.dbChange()"></textarea><button type="button" class="stt-btn" id="stt-btn-db-a7" onclick="A.sttToggle('db-a7')" aria-label="Start voice input for Q7 — Comfort zone">&#127908;</button><div class="stt-status" id="stt-status-db-a7"></div></div>
+    </div>
+
+    <!-- Q8: Actions achieved -->
+    <div class="db-q" id="dbq-8">
+      <div class="db-q-num">8</div>
+      <div class="db-q-text">Actions achieved for the day</div>
+      <div id="db-a8-list" style="margin-bottom:10px;"></div>
+      <button class="btn btn-g btn-w" onclick="A.dbAddAction8()" style="font-size:13px;">+ Add action</button>
+    </div>
+
+    <!-- Q9: Gratitude -->
+    <div class="db-q" id="dbq-9">
+      <div class="db-q-num">9</div>
+      <div class="db-q-text">What am I most grateful for today?</div>
+      <div class="stt-wrap"><textarea class="inp db-ta db-ta-stt" id="db-a9" placeholder="Express your gratitude..." rows="3" oninput="A.dbChange()"></textarea><button type="button" class="stt-btn" id="stt-btn-db-a9" onclick="A.sttToggle('db-a9')" aria-label="Start voice input for Q9 — Gratitude">&#127908;</button><div class="stt-status" id="stt-status-db-a9"></div></div>
+    </div>
+
+    <!-- Q10: Tomorrow's actions -->
+    <div class="db-q" id="dbq-10">
+      <div class="db-q-num">10</div>
+      <div class="db-q-text">What are the top things I need to do tomorrow to accomplish my goals? Can I schedule these into my diary now?</div>
+      <div id="db-a10-list" style="margin-bottom:10px;"></div>
+      <div id="db-a10-rollover-notice" style="display:none;font-size:11px;color:var(--gold);background:rgba(245,200,66,.07);border:1px solid rgba(245,200,66,.2);border-radius:var(--r2);padding:8px 12px;margin-bottom:10px;">&#9888; These actions have already been copied into a later debrief. Changes made here will not update that debrief automatically.</div>
+      <div id="db-a10-copy-msg" style="display:none;font-size:11px;font-weight:700;padding:6px 10px;border-radius:var(--r2);margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-g" style="flex:1;font-size:13px;" onclick="A.dbAddAction10()">+ Add Action</button>
+        <button class="btn btn-g" style="flex:1;font-size:13px;" id="db-copy-q8-btn" onclick="A.dbCopyFromQ8()">&#128203; Copy from Q8</button>
+      </div>
+    </div>
+
+    <!-- Q11: Business progress -->
+    <div class="db-q" id="dbq-11">
+      <div class="db-q-num">11</div>
+      <div class="db-q-text">What did I do today to move my business forward?</div>
+      <div class="stt-wrap"><textarea class="inp db-ta db-ta-stt" id="db-a11" placeholder="How did you advance your business today?" rows="3" oninput="A.dbChange()"></textarea><button type="button" class="stt-btn" id="stt-btn-db-a11" onclick="A.sttToggle('db-a11')" aria-label="Start voice input for Q11 — Business progress">&#127908;</button><div class="stt-status" id="stt-status-db-a11"></div></div>
+    </div>
+
+    <!-- Q12: Action statement -->
+    <div class="db-q" id="dbq-12">
+      <div class="db-q-num">12</div>
+      <div class="db-q-text">What is my action statement for tomorrow?</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">Affirmations, focus statements, mindset reminders, personal commitments, or intentions for tomorrow.</div>
+      <div class="stt-wrap"><textarea class="inp db-ta db-ta-stt" id="db-a12" placeholder="Write your action statement for tomorrow..." rows="4" oninput="A.dbChange()"></textarea><button type="button" class="stt-btn" id="stt-btn-db-a12" onclick="A.sttToggle('db-a12')" aria-label="Start voice input for Q12 — Action statement">&#127908;</button><div class="stt-status" id="stt-status-db-a12"></div></div>
+    </div>
+
+    <!-- Complete button -->
+    <div style="margin-top:16px;">
+      <div id="db-validation-msg" style="display:none;background:rgba(232,69,90,.08);border:1px solid rgba(232,69,90,.25);border-radius:var(--r2);padding:10px 14px;font-size:12px;color:var(--red);font-weight:700;margin-bottom:10px;"></div>
+      <button class="btn btn-p btn-w btn-lg" onclick="A.completeDebrief()">Complete Debrief &#128142;</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEBRIEF LIST (browse past debriefs) -->
+<div class="scr off" id="scr-debrief-list">
+  <div class="hdr">
+    <div class="hdr-title">Daily Debrief</div>
+    <div class="hdr-btn" onclick="A.startDebrief(today())">&#43;</div>
+  </div>
+  <div style="padding:14px 14px 80px;" id="db-list-body"></div>
+</div>
+
+
+<!-- RED RUNNER: Admin/Mentor allocation screen -->
+<div class="scr off" id="scr-rr-admin">
+  <div class="hdr">
+    <div class="hdr-btn" onclick="A.goBack()">&#8592;</div>
+    <div class="hdr-title">Red Runners</div>
+    <div class="hdr-btn" onclick="A.rrShowAllocForm(null)" title="Allocate">&#43;</div>
+  </div>
+  <!-- Tab filters -->
+  <div style="display:flex;gap:6px;padding:10px 14px;background:var(--s1);border-bottom:1px solid var(--bd);overflow-x:auto;flex-shrink:0;">
+    <div class="tb on" id="rr-tab-current"   onclick="A.rrSetTab('current',this)">Current</div>
+    <div class="tb"    id="rr-tab-upcoming" onclick="A.rrSetTab('upcoming',this)">Upcoming</div>
+    <div class="tb"    id="rr-tab-completed"onclick="A.rrSetTab('completed',this)">Completed</div>
+    <div class="tb"    id="rr-tab-cancelled"onclick="A.rrSetTab('cancelled',this)">Cancelled</div>
+  </div>
+  <div style="padding:14px 14px 80px;">
+    <!-- Allocation form (hidden by default) -->
+    <div class="rr-form" id="rr-alloc-form" style="display:none;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:14px;color:var(--rr-bright);">&#128100; Allocate Red Runner</div>
+      <input type="hidden" id="rr-edit-id">
+      <div style="margin-bottom:12px;">
+        <label class="lbl">Select User</label>
+        <select class="inp" id="rr-user-sel">
+          <option value="">— Select a user —</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="lbl">Programme Start Date</label>
+        <input class="inp" type="date" id="rr-start" oninput="A.rrUpdateDuration()">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="lbl">Programme End Date</label>
+        <input class="inp" type="date" id="rr-end" oninput="A.rrUpdateDuration()">
+        <div style="font-size:11px;color:var(--txt3);margin-top:4px;">Select the programme start and end dates. Programme lengths may vary.</div>
+      </div>
+      <div id="rr-duration-wrap" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--s3);border-radius:var(--r2);">
+        <div id="rr-duration-lbl" style="font-size:12px;font-weight:700;color:var(--txt2);"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="lbl">Note (optional)</label>
+        <textarea class="inp" id="rr-note" rows="2" placeholder="Allocation note..." style="resize:none;font-size:14px;"></textarea>
+      </div>
+      <div id="rr-form-err" style="display:none;color:var(--red);font-size:12px;font-weight:700;margin-bottom:10px;"></div>
+      <div id="rr-confirm-wrap" style="display:none;background:rgba(192,17,43,.08);border:1px solid var(--rr-border);border-radius:var(--r2);padding:12px;margin-bottom:12px;font-size:13px;color:var(--rr-text);"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-p btn-w" onclick="A.rrSaveAlloc()" style="background:var(--rr-red);">Allocate Red Runner</button>
+        <button class="btn btn-g" onclick="A.rrHideAllocForm()">Cancel</button>
+      </div>
+    </div>
+    <!-- Assignment list -->
+    <div id="rr-list"></div>
+  </div>
+</div>
+
+<!-- RED RUNNER: Member view screen -->
+<div class="scr off" id="scr-rr-member">
+  <div class="hdr">
+    <div class="hdr-btn" onclick="A.goBack()">&#8592;</div>
+    <div class="hdr-title">Red Runner</div>
+  </div>
+  <div style="padding:14px 14px 80px;" id="rr-member-body"></div>
+</div>
+
 </div><!-- #app -->
 
 <!-- BOTTOM NAV -->
 <div id="bnav">
   <div class="nrow" id="nav-row">
     <div class="ni on" id="ni-today" onclick="A.nav('scr-main',this)"><div class="ni-ico">&#128202;</div><div class="ni-lbl">Today</div></div>
+    <div class="ni" id="ni-debrief" onclick="A.nav('scr-debrief-list',this)"><div class="ni-ico">&#128221;</div><div class="ni-lbl">Debrief</div></div>
     <div class="ni" id="ni-team" onclick="A.nav('scr-dash',this)"><div class="ni-ico">&#128101;</div><div class="ni-lbl">Team</div></div>
     <div class="ni" id="ni-crm" onclick="A.nav('scr-crm',this);A.renderCRM()"><div class="ni-ico">&#128199;</div><div class="ni-lbl">Contacts</div></div>
     <div class="ni" id="ni-ppl" onclick="A.nav('scr-people',this)"><div class="ni-ico">&#129309;</div><div class="ni-lbl">People</div></div>
@@ -477,10 +988,24 @@ var QUOTES=[{t:"Success is the sum of small efforts, repeated day in and day out
 var ACHS=[{id:"a1",ico:"&#128172;",name:"First Chat",desc:"Log your first Conversation",fn:function(h){return totM(h,"CONV")>=1;}},{id:"a2",ico:"&#128293;",name:"On Fire",desc:"3-day streak",fn:function(h){return streak(h,"CONV")>=3;}},{id:"a3",ico:"&#129507;",name:"Unstoppable",desc:"7-day streak",fn:function(h){return streak(h,"CONV")>=7;}},{id:"a4",ico:"&#128203;",name:"MPA Starter",desc:"Log your first MPA",fn:function(h){return totM(h,"MPA")>=1;}},{id:"a5",ico:"&#127942;",name:"DTM Winner",desc:"Log your first DTM",fn:function(h){return totM(h,"DTM")>=1;}},{id:"a6",ico:"&#127775;",name:"MG1 Achiever",desc:"Log your first MG1",fn:function(h){return totM(h,"MG1")>=1;}},{id:"a7",ico:"&#9889;",name:"Overachiever",desc:"Exceed a daily goal",fn:function(h,g){return anyExceed(h,g);}},{id:"a8",ico:"&#128142;",name:"Perfect Day",desc:"Hit all goals in one day",fn:function(h,g){return anyPerfect(h,g);}},{id:"a9",ico:"&#128175;",name:"Century Club",desc:"100 total activities",fn:function(h){return totAll(h)>=100;}}];
 
 var me=null,profiles={},allData={},follows={},requests={},connections={},crmData={},mentorLinks={},processData={};
+var earnedAchs={}; // persistently earned achievements {achievementId: {earned, earnedAt}}
+// ── RED RUNNER STATE ─────────────────────────────────────────────────────────
+// Raw authoritative data from Firebase — never cleared on logout
+var rrAllAssignments=[];    // every assignment in Firebase (unfiltered)
+var rrDataLoaded=false;     // true once Firebase has returned at least one snapshot
+// Role-scoped views — derived from rrAllAssignments on demand
+// Do NOT store filtered arrays persistently — always re-derive
+var rrTab="current";        // active tab in RR admin screen
+var _rrListenerCount=0;     // diagnostic: how many times listener has fired
 var prevScr=null,pinBuf="",pinUID="",selAv="&#128142;",sAv="&#128142;";
 var curTab=0,pTab="all",pSearch="",crmSearch="",charts={},fbReady=false,sharePeriod="weekly";
 var picDataUrl="";
-var curDateKey=""; // tracks which date the Today tab is showing — defaults to today()
+var curDateKey=""; // tracks which date the Today tab is showing
+var debriefs={};
+var customGoalData={}; // {dateKey: {goalId: {value, goalNameSnapshot, targetSnapshot, periodSnapshot, updatedAt}}}
+var cgDefs=[]; // active+archived custom goal definitions for current user // all debriefs for current user: {dateKey: debrief_object}
+var curDbDate=""; // which date is loaded in the debrief screen
+var dbDraft={}; // current in-memory debrief being edited — defaults to today()
 
 function dk(d){d=d||new Date();var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return y+m+day;}
 function today(){return dk();}
@@ -527,12 +1052,31 @@ function avHtml(p,size){size=size||36;if(p&&p.photo)return "<img src=\""+p.photo
 
 // ── FIREBASE ──────────────────────────────────────────────────────────────────
 var fbTimer=setTimeout(function(){if(!fbReady){fbReady=true;document.getElementById("fb-err").style.display="block";renderLogin();}},8000);
-fbOn("hip_v1/profiles",function(snap){profiles=snap.exists()?snap.val():{};if(!fbReady){fbReady=true;clearTimeout(fbTimer);document.getElementById("fb-err").style.display="none";}renderLogin();if(me&&profiles[me.id])me=Object.assign({},me,profiles[me.id],{id:me.id});if(vis()==="scr-dash")renderDash();if(vis()==="scr-admin")renderAdmin();if(vis()==="scr-mentor")renderMentor();});
+fbOn("hip_v1/profiles",function(snap){profiles=snap.exists()?snap.val():{};if(!fbReady){fbReady=true;clearTimeout(fbTimer);document.getElementById("fb-err").style.display="none";}renderLogin();if(me&&profiles[me.id]){me=Object.assign({},me,profiles[me.id],{id:me.id});cgDefs=(profiles[me.id].customGoals)?Object.values(profiles[me.id].customGoals):[];}if(vis()==="scr-dash")renderDash();if(vis()==="scr-admin")renderAdmin();if(vis()==="scr-mentor")renderMentor();});
 fbOn("hip_v1/data",function(snap){allData=snap.exists()?snap.val():{};if(me){renderMain();renderBN();}if(vis()==="scr-dash")renderDash();if(vis()==="scr-mentor")renderMentor();});
 fbOn("hip_v1/follows",function(snap){follows=snap.exists()?snap.val():{};if(me){updateBadge();if(vis()==="scr-people")renderPeople();}});
 fbOn("hip_v1/requests",function(snap){requests=snap.exists()?snap.val():{};if(me){updateBadge();if(vis()==="scr-people")renderPeople();}});
 fbOn("hip_v1/connections",function(snap){connections=snap.exists()?snap.val():{};if(me&&vis()==="scr-people")renderPeople();});
-fbOn("hip_v1/crm",function(snap){crmData=snap.exists()?snap.val():{};if(me&&vis()==="scr-crm")renderCRM();if(me&&vis()==="scr-process")renderProcess();});
+fbOn("hip_v1/crm",function(snap){crmData=snap.exists()?snap.val():{};if(me&&vis()==="scr-crm")renderCRM();if(me&&vis()==="scr-process")renderProcess();if(me)checkTripletPipeline(false);});
+fbOn("hip_v1/achievements",function(snap){earnedAchs=snap.exists()&&me&&snap.val()[me.id]?snap.val()[me.id]:{};if(curTab===0)renderToday();});
+
+fbOn("hip_v1/redRunnerAssignments",function(snap){
+  _rrListenerCount++;
+  console.log("RR_LISTENER_FIRE #"+_rrListenerCount+" me="+(me?me.id:"null")+" role="+(me?me.role:"none"));
+  // Always update the raw authoritative store regardless of login state
+  var all=snap.exists()?snap.val():{};
+  rrAllAssignments=Object.values(all).filter(function(a){return a&&a.userId;});
+  rrDataLoaded=true;
+  console.log("RR_LISTENER_FIRE rawCount="+rrAllAssignments.length+" ids="+rrAllAssignments.map(function(a){return a.id;}).join(","));
+  // Always call refreshRedRunnerState — it guards internally on me and rrDataLoaded
+  refreshRedRunnerState();
+});
+fbOn("hip_v1/customGoalData",function(snap){
+  if(me){customGoalData=(snap.exists()&&snap.val()[me.id])||{};renderCGTrack();if(curTab===1)renderCGPeriod("week");if(curTab===2)renderCGPeriod("month");if(curTab===3)renderCGPeriod("year");}
+});
+fbOn("hip_v1/debriefs",function(snap){
+  if(me){debriefs=snap.exists()?(snap.val()[me.id]||{}):{};if(vis()==="scr-debrief-list")A.renderDebriefList();if(vis()==="scr-debrief")A.renderDebrief(curDbDate);}
+});
 fbOn("hip_v1/mentor_links",function(snap){mentorLinks=snap.exists()?snap.val():{};if(me){updateBadge();if(vis()==="scr-mentor")renderMentor();if(vis()==="scr-people")renderPplList();}});
 
 // ── BOTTLENECK ────────────────────────────────────────────────────────────────
@@ -830,7 +1374,17 @@ function analyseBNForDays(uid, days) {
 
 // ── APP OBJECT ────────────────────────────────────────────────────────────────
 var A={
-show:function(id){var cur=document.querySelector(".scr:not(.off)");if(cur&&cur.id!==id)prevScr=cur.id;document.querySelectorAll(".scr").forEach(function(s){s.classList.toggle("off",s.id!==id);});if(id==="scr-settings"){A.loadSettP();loadNotif();document.getElementById("admin-link-wrap").style.display=isAdmin()?"block":"none";if(!isAdmin())A.renderGoalEd();}if(id==="scr-dash")renderDash();if(id==="scr-people")renderPeople();if(id==="scr-mentor")renderMentor();if(id==="scr-crm")renderCRM();if(id==="scr-admin")renderAdmin();if(id==="scr-process")renderProcess();},
+show:function(id){var cur=document.querySelector(".scr:not(.off)");if(cur&&cur.id!==id)prevScr=cur.id;document.querySelectorAll(".scr").forEach(function(s){s.classList.toggle("off",s.id!==id);});if(id==="scr-settings"){A.loadSettP();loadNotif();document.getElementById("admin-link-wrap").style.display=isAdmin()?"block":"none";if(!isAdmin()){A.renderGoalEd();A.cgRenderList();}A._apInit();}if(id==="scr-dash")renderDash();if(id==="scr-people")renderPeople();if(id==="scr-mentor")renderMentor();if(id==="scr-crm")renderCRM();if(id==="scr-admin")renderAdmin();if(id==="scr-process")renderProcess();
+if(id==="scr-rr-admin"){
+  // Populate user selector but do NOT call rrRenderList directly —
+  // refreshRedRunnerState is the sole render path for the list
+  A.rrPopulateUserSel();
+  refreshRedRunnerState();
+}
+if(id==="scr-rr-member")A.rrRenderMemberView();
+if(id==="scr-debrief-list"){A.sttStopAll();A.renderDebriefList();}
+if(id==="scr-debrief"&&curDbDate){A.renderDebrief(curDbDate);A._sttInitButtons();}
+},
 goBack:function(){A.show(prevScr||(me?isAdmin()?"scr-admin":"scr-main":"scr-login"));},
 nav:function(id,el){document.querySelectorAll(".ni").forEach(function(n){n.classList.remove("on");});el.classList.add("on");A.show(id);},
 showCreate:function(){pinBuf="";selAv="&#128142;";picDataUrl="";document.querySelectorAll("#av-picker .av-opt").forEach(function(a){a.classList.toggle("sel",a.dataset.v==="&#128142;");});document.getElementById("c-name").value="";var pp=document.getElementById("c-pic-preview"),ph=document.getElementById("c-pic-ph");if(pp){pp.style.display="none";pp.src="";}if(ph)ph.style.display="flex";buildPad("c-pad","create");dotsFill("c-dots",0);A.show("scr-create");},
@@ -838,7 +1392,14 @@ previewPic:function(inp,prevId,phId){var file=inp.files[0];if(!file)return;var r
 createProfile:function(){var name=document.getElementById("c-name").value.trim();if(!name)return alert("Please enter your name");if(pinBuf.length!==4)return alert("Please set a 4-digit PIN");var id="u_"+Date.now(),existing=Object.values(profiles),role=existing.length===0?"admin":"member";var p={id:id,name:name,avatar:selAv,pin:pinBuf,role:role,goals:JSON.parse(JSON.stringify(DEF)),created:new Date().toISOString()};if(picDataUrl)p.photo=picDataUrl;fbSet("hip_v1/profiles/"+id,p).then(function(){me=p;afterLogin();});},
 startLogin:function(uid){var p=profiles[uid];if(!p)return;pinBuf="";pinUID=uid;var av=document.getElementById("pin-av");if(p.photo)av.innerHTML="<img src=\""+p.photo+"\" style=\"width:72px;height:72px;border-radius:50%;object-fit:cover;\">";else av.textContent=p.avatar||"&#128142;";document.getElementById("pin-title").textContent=p.name;document.getElementById("pin-err").textContent="";dotsFill("p-dots",0);buildPad("p-pad","login");A.show("scr-pin");},
 pinPress:function(k,mode){var did=mode==="create"?"c-dots":mode==="change"?"ch-dots":"p-dots";if(k==="X")pinBuf=pinBuf.slice(0,-1);else if(pinBuf.length<4)pinBuf+=k;dotsFill(did,pinBuf.length);if(pinBuf.length===4&&mode==="login"){var p=profiles[pinUID];if(p&&p.pin===pinBuf){me=Object.assign({},p,{id:pinUID});afterLogin();}else{document.getElementById("pin-err").textContent="Wrong PIN, try again.";var dd=document.getElementById(did);dd.classList.add("shake");setTimeout(function(){dd.classList.remove("shake");pinBuf="";dotsFill(did,0);document.getElementById("pin-err").textContent="";},500);}}},
-logout:function(){me=null;document.getElementById("bnav").style.display="none";var mn=document.getElementById("ni-mentor");if(mn)mn.remove();var np=document.getElementById("ni-process");if(np)np.remove();A.show("scr-login");},
+logout:function(){
+  // Clear user-specific state
+  me=null;debriefs={};dbDraft={};curDbDate="";customGoalData={};cgDefs=[];earnedAchs={};
+  // RR: do NOT clear rrAllAssignments — Firebase data is authoritative and persists
+  // Only clear UI state
+  rrTab="current";A._rrSaving=false;
+  // Refresh state with me=null — clears UI, retains raw data for next login
+  refreshRedRunnerState();A.sttStopAll();document.getElementById("bnav").style.display="none";A._apApply();var mn=document.getElementById("ni-mentor");if(mn)mn.remove();var np=document.getElementById("ni-process");if(np)np.remove();A.show("scr-login");},
 savePIN:function(){if(pinBuf.length!==4)return alert("Enter 4 digits");fbUpd("hip_v1/profiles/"+me.id,{pin:pinBuf}).then(function(){me.pin=pinBuf;pinBuf="";dotsFill("ch-dots",0);alert("PIN updated!");});},
 loadSettP:function(){var p=profiles[me&&me.id]||me||{};var ni=document.getElementById("s-display-name");if(ni)ni.value=p.name||"";var prev=document.getElementById("s-pic-preview"),ph=document.getElementById("s-pic-ph");if(p.photo){if(prev){prev.src=p.photo;prev.style.display="block";}if(ph)ph.style.display="none";}else{if(prev)prev.style.display="none";if(ph)ph.style.display="flex";}sAv=p.avatar||"&#128142;";document.querySelectorAll("#s-av-picker .av-opt").forEach(function(a){a.classList.toggle("sel",a.dataset.v===sAv);});document.getElementById("goals-section").style.display=isAdmin()?"none":"block";},
 saveDisplayName:function(){var name=document.getElementById("s-display-name").value.trim();if(!name)return alert("Name cannot be empty");fbUpd("hip_v1/profiles/"+me.id,{name:name}).then(function(){me.name=name;var el=document.getElementById("m-name");if(el)el.textContent=name;alert("Name updated!");});},
@@ -930,6 +1491,17 @@ shareText:function(){
   METRICS.forEach(function(m){lines.push(m.label+": "+d.tots[m.key]);});
   var bnA=analyseBNForDays(me.id,d.days);
   if(bnA&&bnA.primary)lines.push("","Bottleneck: "+bnA.primary.m.label+" ("+bnA.primary.freqPct+"% of days, "+bnA.primary.trend+")");
+  // Custom Goals section
+  var activeCG=A.cgActiveDefs();
+  if(activeCG.length){
+    lines.push("","CUSTOM GOALS");
+    activeCG.forEach(function(g){
+      var total=A.cgPeriodTotal(g.id,g.period);
+      var p2=pct(total,g.targetQuantity);
+      var status=total>=g.targetQuantity?(total>g.targetQuantity?"Exceeded":"Met"):"Not met";
+      lines.push("",""+g.name,"Target: "+g.targetQuantity+" "+g.period,"Actual: "+total,"Progress: "+p2+"%","Status: "+status);
+    });
+  }
   lines.push("","Helping Individuals Prosper");
   var txt=lines.join("\n");
   if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){alert("Copied!");});
@@ -974,7 +1546,7 @@ downloadPDF:function(){
   html+=bnH;
 
   // Summary totals
-  html+="<h2>Summary</h2><div class=\"g4\">";
+  html+="<h2>Core Business Metrics</h2><div class=\"g4\">";
   METRICS.forEach(function(m){
     var a=d.tots[m.key],gl=g[m.key]||{qty:1,period:"daily"};
     var gq=gl.period==="daily"?gl.qty*Math.max(d.days.length,1):gl.qty;
@@ -1010,7 +1582,19 @@ downloadPDF:function(){
     html+="<p style=\"color:#666;font-size:13px;padding:14px 0;\">No activity recorded for this period.</p>";
   }
 
-  html+="<footer>The HIP Group Tracking Sheet &middot; Helping Individuals Prosper &middot; "+me.name+" &middot; "+new Date().toLocaleString("en-NZ")+"</footer></body></html>";
+  // Custom goals in PDF
+var activeCG=A.cgActiveDefs();
+if(activeCG.length){
+  html+="<h2>Custom Goals</h2><table><thead><tr><th>Goal</th><th>Duration</th><th>Target</th><th>Actual</th><th>%</th><th>Status</th></tr></thead><tbody>";
+  activeCG.forEach(function(g){
+    var total=A.cgPeriodTotal(g.id,g.period);
+    var p2=pct(total,g.targetQuantity);
+    var status=total>=g.targetQuantity?(total>g.targetQuantity?"Exceeded":"Met"):"Not met";
+    html+="<tr><td>"+g.name+"</td><td>"+g.period+"</td><td class=\"num\">"+g.targetQuantity+"</td><td class=\"num\">"+total+"</td><td class=\"num\">"+p2+"%</td><td>"+status+"</td></tr>";
+  });
+  html+="</tbody></table>";
+}
+html+="<footer>The HIP Group Tracking Sheet &middot; Helping Individuals Prosper &middot; "+me.name+" &middot; "+new Date().toLocaleString("en-NZ")+"</footer></body></html>";
 
   var w=window.open("","_blank");
   if(!w){alert("Please allow popups to download the report.");return;}
@@ -1082,7 +1666,7 @@ showCrmAdd:function(){document.getElementById("crm-edit-id").value="";document.g
 showCrmEdit:function(id){var entry=(crmData[me.id]||{})[id];if(!entry)return;document.getElementById("crm-edit-id").value=id;document.getElementById("crm-edit-title").textContent="Edit Contact";document.getElementById("crm-fname").value=entry.name||"";document.getElementById("crm-phone").value=entry.phone||"";document.getElementById("crm-email").value=entry.email||"";document.getElementById("crm-note").value=entry.note||"";document.getElementById("crm-reminder").value=entry.reminder||"";var pb=document.getElementById("crm-process-btn");pb.style.display="block";if(entry.stage!==undefined){pb.textContent="In Process: Stage "+(entry.stage+1)+" - "+PROCESS_STAGES[entry.stage];pb.onclick=function(){A.removeFromProcess(id);};}else{pb.textContent="+ Add to Partnership Process";pb.onclick=function(){A.addToProcess(id);};}document.getElementById("crm-del-btn").style.display="inline-flex";A.show("scr-crm-edit");},
 saveCRM:function(){var name=document.getElementById("crm-fname").value.trim();if(!name)return alert("Name is required");var id=document.getElementById("crm-edit-id").value||("c_"+Date.now());var existing=(crmData[me.id]||{})[id]||{};var entry={name:name,phone:document.getElementById("crm-phone").value.trim(),email:document.getElementById("crm-email").value.trim(),note:document.getElementById("crm-note").value.trim(),reminder:document.getElementById("crm-reminder").value||"",updated:Date.now()};if(existing.stage!==undefined)entry.stage=existing.stage;if(existing.stageUpdated)entry.stageUpdated=existing.stageUpdated;fbSet("hip_v1/crm/"+me.id+"/"+id,entry).then(function(){A.show("scr-crm");});},
 deleteCRM:function(){var id=document.getElementById("crm-edit-id").value;if(!id)return;if(!confirm("Delete this contact?"))return;fbSet("hip_v1/crm/"+me.id+"/"+id,null).then(function(){A.show("scr-crm");});},
-addToProcess:function(id){fbUpd("hip_v1/crm/"+me.id+"/"+id,{stage:0,stageUpdated:Date.now()}).then(function(){alert("Contact added to process at Stage 1.");A.show("scr-crm");});},
+addToProcess:function(id){fbUpd("hip_v1/crm/"+me.id+"/"+id,{stage:0,stageUpdated:Date.now()}).then(function(){alert("Contact added to process at Stage 1.");A.show("scr-crm");checkTripletPipeline(false);});},
 removeFromProcess:function(id){if(!confirm("Remove this contact from the process?"))return;R("hip_v1/crm/"+me.id+"/"+id+"/stage").set(null);R("hip_v1/crm/"+me.id+"/"+id+"/stageUpdated").set(null).then(function(){alert("Removed from process.");A.show("scr-crm");});},
 setStage:function(cid,stage){fbUpd("hip_v1/crm/"+me.id+"/"+cid,{stage:stage,stageUpdated:Date.now()});},
 selectStreakDay:function(dateKey){
@@ -1092,20 +1676,1379 @@ selectStreakDay:function(dateKey){
 },
 setPTab:function(t){pTab=t;["all","following","connected"].forEach(function(x){var b=document.getElementById("ptab-"+x);if(!b)return;var on=x===t;b.style.background=on?"var(--red)":"transparent";b.style.color=on?"#fff":"var(--txt2)";b.style.borderColor=on?"transparent":"var(--bd)";});renderPplList();},
 filterPeople:function(v){pSearch=v.toLowerCase();renderPplList();},
+
+// ── DEBRIEF METHODS ───────────────────────────────────────────────────────────
+startDebrief:function(dateKey){
+  curDbDate=dateKey||today();
+  // Load existing or start fresh
+  var existing=debriefs[curDbDate]||null;
+  if(existing){
+    dbDraft=JSON.parse(JSON.stringify(existing));
+  }else{
+    var rolloverQ8=A.getQ10Rollover(curDbDate);
+    dbDraft={date:curDbDate,status:"draft",a1:"",a2_score:0,a2_touched:false,a3:"",a4:"",a5:"",a6:"",a7:"",a8:rolloverQ8,a9:"",a10:[],a11:"",a12:""};
+  }
+  A.show("scr-debrief");
+  A.renderDebrief(curDbDate);
+},
+
+renderDebrief:function(dateKey){
+  var isToday=dateKey===today();
+  var lbl=document.getElementById("db-hdr-title");
+  var dlbl=document.getElementById("db-hdr-date");
+  if(lbl)lbl.textContent=isToday?"Daily Debrief":"Debrief";
+  if(dlbl)dlbl.textContent=isToday?"Today":fmtK(dateKey);
+
+  var completed=dbDraft.status==="completed";
+
+  // Save and copy always available — completed debriefs remain editable
+  var saveBtn=document.getElementById("db-save-btn");
+  if(saveBtn)saveBtn.style.display="flex";
+
+  // Show green border on status bar when completed
+  var statusBar=document.getElementById("db-status-bar");
+  if(statusBar){
+    statusBar.style.background=completed?"rgba(61,214,140,.04)":"";
+    statusBar.style.borderBottom=completed?"1px solid rgba(61,214,140,.2)":"1px solid var(--bd)";
+  }
+
+  // Load prev stmt carry-forward from most recent completed debrief before this date
+  var prevStmtEl=document.getElementById("db-prev-stmt");
+  var prevStmtTxt=document.getElementById("db-prev-stmt-text");
+  var prevKeys=Object.keys(debriefs).filter(function(k){return k<dateKey&&debriefs[k].status==="completed"&&debriefs[k].a12;}).sort();
+  if(prevKeys.length&&prevStmtEl&&prevStmtTxt){
+    prevStmtEl.style.display="block";
+    prevStmtTxt.textContent=debriefs[prevKeys[prevKeys.length-1]].a12;
+  }else if(prevStmtEl){prevStmtEl.style.display="none";}
+
+  // Populate text fields — no disabling, completed debriefs are always editable
+  var fields=["a1","a3","a4","a6","a7","a9","a11","a12"];
+  fields.forEach(function(f){var el=document.getElementById("db-"+f);if(el){el.value=dbDraft[f]||"";el.disabled=false;}});
+
+  // Score slider — always enabled
+  var slider=document.getElementById("db-a2");
+  var scoreDis=document.getElementById("db-score-display");
+  if(slider){
+    slider.disabled=false;
+    slider.dataset.touched=dbDraft.a2_touched?"true":"false";
+    if(dbDraft.a2_touched){slider.value=dbDraft.a2_score;A.dbScoreChange(dbDraft.a2_score,true);}
+    else{slider.value=5;if(scoreDis)scoreDis.innerHTML="&#8212;";slider.style.background="var(--s3)";}
+  }
+
+  // Q3 conditional
+  A.dbQ3Toggle();
+
+  // Q8 actions
+  A.dbRenderQ8();
+
+  // Q5 — render current selection (manual, independent of Q8)
+  A.dbRenderQ5();
+
+  // Q10 actions
+  A.dbRenderQ10();
+
+  // Reset any opacity/disabled on question blocks
+  [1,3,4,5,6,7,8,9,10,11,12].forEach(function(n){var el=document.getElementById("dbq-"+n);if(el){el.style.opacity="";el.style.pointerEvents="";}});
+  // Show add buttons for Q8 and Q10
+  var addBtn=document.getElementById("dbq-8")&&document.getElementById("dbq-8").querySelector("button");
+  var addBtn10=document.getElementById("dbq-10")&&document.getElementById("dbq-10").querySelector("button");
+  if(addBtn)addBtn.style.display="";
+  if(addBtn10)addBtn10.style.display="";
+
+  A.dbUpdateProgress();
+},
+
+dbScoreChange:function(val,silent){
+  val=parseInt(val);
+  var slider=document.getElementById("db-a2");
+  var dis=document.getElementById("db-score-display");
+  if(slider)slider.dataset.touched="true";
+  dbDraft.a2_score=val;
+  dbDraft.a2_touched=true;
+  var col=val<=3?"var(--red)":val<=6?"var(--gold)":"var(--green)";
+  if(dis){dis.textContent=val+"/10";dis.style.color=col;}
+  if(slider){
+    var pct=((val-1)/9)*100;
+    slider.style.background="linear-gradient(to right,"+col+" "+pct+"%, var(--s3) "+pct+"%)";
+  }
+  A.dbQ3Toggle();
+  A.dbRenderQ5();
+  if(!silent)A.dbAutoSave();
+  A.dbUpdateProgress();
+},
+
+dbQ3Toggle:function(){
+  var q3=document.getElementById("dbq-3");
+  var a3=document.getElementById("db-a3");
+  if(!q3)return;
+  var show=dbDraft.a2_touched&&dbDraft.a2_score<10;
+  q3.style.display=show?"block":"none";
+  if(!show&&a3){a3.value="";dbDraft.a3="";}
+},
+
+dbChange:function(){
+  var fields=["a1","a3","a4","a6","a7","a9","a11","a12"];
+  fields.forEach(function(f){var el=document.getElementById("db-"+f);if(el)dbDraft[f]=el.value;});
+  A.dbAutoSave();
+  A.dbUpdateProgress();
+},
+
+dbAutoSave:function(){
+  if(!me||!curDbDate)return;
+  var toSave=JSON.parse(JSON.stringify(dbDraft));
+  if(toSave.status!=="completed")toSave.status="draft";
+  fbSet("hip_v1/debriefs/"+me.id+"/"+curDbDate,toSave);
+},
+
+dbSetQ5:function(val){
+  // Manual Yes/No — fully independent of Q8
+  if(dbDraft.status==="completed"&&!dbDraft._editMode){}// still allow edit
+  dbDraft.a5=dbDraft.a5===val?"":val; // toggle off if tapping same
+  A.dbRenderQ5();
+  A.dbAutoSave();
+  A.dbUpdateProgress();
+},
+
+dbRenderQ5:function(){
+  var yesEl=document.getElementById("db-a5-yes");
+  var noEl=document.getElementById("db-a5-no");
+  if(yesEl){yesEl.style.borderColor=dbDraft.a5==="yes"?"var(--green)":"var(--bd)";yesEl.style.color=dbDraft.a5==="yes"?"var(--green)":"var(--txt3)";}
+  if(noEl){noEl.style.borderColor=dbDraft.a5==="no"?"var(--red)":"var(--bd)";noEl.style.color=dbDraft.a5==="no"?"var(--red)":"var(--txt3)";}
+},
+
+dbAddAction8:function(){
+  var txt=prompt("Enter the action you completed today:");
+  if(!txt||!txt.trim())return;
+  dbDraft.a8=dbDraft.a8||[];
+  dbDraft.a8.push({id:"a8_"+Date.now(),text:txt.trim(),result:"",addedToday:true});
+  A.dbRenderQ8();
+  A.dbRenderQ5();
+  A.dbRenderQ10(); // refresh copy button enabled state
+  A.dbAutoSave();
+},
+
+dbSetAction8:function(id,result){
+  var act=dbDraft.a8.find(function(a){return a.id===id;});
+  if(!act)return;
+  act.result=act.result===result?"":result;
+  A.dbRenderQ8();
+  A.dbRenderQ5();
+  A.dbAutoSave();
+  A.dbUpdateProgress();
+},
+
+dbRenderQ8:function(){
+  var list=document.getElementById("db-a8-list");
+  if(!list)return;
+  var completed=dbDraft.status==="completed";
+  if(!dbDraft.a8||!dbDraft.a8.length){
+    list.innerHTML="<div style=\"font-size:12px;color:var(--txt3);padding:8px 0;\">No carried-over actions. Tap + Add action to log what you worked on today.</div>";
+    return;
+  }
+  list.innerHTML=dbDraft.a8.map(function(a){
+    var tickOn=a.result==="tick",crossOn=a.result==="cross";
+    var addedBadge=a.addedToday?"<span class=\"db-act-added\">added today</span>":"";
+    var tickDis="cursor:pointer;";
+    return "<div class=\"db-act\">"+
+      "<div class=\"db-tick "+(tickOn?"tick-on":"")+"\" style=\""+tickDis+"\" onclick=\"A.dbSetAction8('"+a.id+"','tick')\">&#10003;</div>"+
+      "<div class=\"db-tick "+(crossOn?"cross-on":"")+"\" style=\""+tickDis+"\" onclick=\"A.dbSetAction8('"+a.id+"','cross')\">&#10007;</div>"+
+      "<div class=\"db-act-txt\">"+a.text+"</div>"+addedBadge+
+      "</div>";
+  }).join("");
+},
+
+dbAddAction10:function(){
+  var txt=prompt("Enter tomorrow's action:");
+  if(!txt||!txt.trim())return;
+  dbDraft.a10=dbDraft.a10||[];
+  dbDraft.a10.push({id:"a10_"+Date.now(),text:txt.trim()});
+  A.dbRenderQ10();
+  A.dbAutoSave();
+  A.dbUpdateProgress();
+},
+
+dbEditAction10:function(id){
+  var act=dbDraft.a10.find(function(a){return a.id===id;});
+  if(!act)return;
+  var txt=prompt("Edit action:",act.text);
+  if(txt===null)return;
+  if(!txt.trim()){if(confirm("Remove this action?"))dbDraft.a10=dbDraft.a10.filter(function(a){return a.id!==id;});}
+  else act.text=txt.trim();
+  A.dbRenderQ10();
+  A.dbAutoSave();
+},
+
+dbMoveAction10:function(id,dir){
+  var arr=dbDraft.a10,idx=arr.findIndex(function(a){return a.id===id;});
+  if(idx<0)return;
+  var nIdx=idx+dir;
+  if(nIdx<0||nIdx>=arr.length)return;
+  var tmp=arr[idx];arr[idx]=arr[nIdx];arr[nIdx]=tmp;
+  A.dbRenderQ10();
+  A.dbAutoSave();
+},
+
+dbCopyFromQ8:function(){
+  var q8list=dbDraft.a8||[];
+  // Filter to valid, non-blank actions
+  var validQ8=q8list.filter(function(a){return a.text&&a.text.trim();});
+  if(!validQ8.length){
+    var msg=document.getElementById("db-a10-copy-msg");
+    if(msg){msg.textContent="There are no Question 8 actions available to copy.";msg.style.display="block";msg.style.background="rgba(255,255,255,.04)";msg.style.color="var(--txt3)";setTimeout(function(){msg.style.display="none";},3000);}
+    return;
+  }
+  // Build set of existing Q10 wording (trimmed, lowercase) for duplicate detection
+  dbDraft.a10=dbDraft.a10||[];
+  var existingLower=dbDraft.a10.map(function(a){return (a.text||"").trim().toLowerCase();});
+  var copied=0,skipped=0;
+  validQ8.forEach(function(q8a){
+    var trimmed=q8a.text.trim();
+    if(!trimmed)return;
+    var lower=trimmed.toLowerCase();
+    if(existingLower.indexOf(lower)>=0){skipped++;return;}
+    var newA={
+      id:"a10_"+Date.now()+"_"+Math.random().toString(36).slice(2,6),
+      text:trimmed,
+      source:"q8_copy",
+      sourceQ8Id:q8a.id,
+      createdAt:Date.now()
+    };
+    dbDraft.a10.push(newA);
+    existingLower.push(lower); // prevent dups within same copy batch (if Q8 has duplicates)
+    copied++;
+  });
+  // Save to Firebase as one update
+  A.dbAutoSave();
+  A.dbRenderQ10();
+  A.dbUpdateProgress();
+  // Show result message
+  var msg=document.getElementById("db-a10-copy-msg");
+  if(msg){
+    var parts=[];
+    if(copied>0)parts.push(copied+" action"+(copied!==1?"s":"")+" copied");
+    if(skipped>0)parts.push(skipped+" duplicate"+(skipped!==1?"s":"")+" skipped");
+    msg.textContent=parts.join(". ")+(parts.length?".":"");
+    msg.style.display="block";
+    msg.style.background=copied>0?"rgba(61,214,140,.08)":"rgba(255,255,255,.04)";
+    msg.style.color=copied>0?"var(--green)":"var(--txt3)";
+    setTimeout(function(){msg.style.display="none";},3500);
+  }
+},
+
+dbRenderQ10:function(){
+  var list=document.getElementById("db-a10-list");
+  if(!list)return;
+  // Check rollover notice — has any later debrief loaded Q10 from this date?
+  var noticeEl=document.getElementById("db-a10-rollover-notice");
+  if(noticeEl){
+    var laterDebriefs=Object.keys(debriefs).filter(function(k){return k>curDbDate;});
+    var rolledOver=laterDebriefs.some(function(k){
+      var d=debriefs[k];
+      return d&&d.a8&&d.a8.some(function(a){return a.id&&a.id.indexOf("a8_a10_")===0;});
+    });
+    noticeEl.style.display=rolledOver?"block":"none";
+  }
+  // Update Copy from Q8 button state
+  var copyBtn=document.getElementById("db-copy-q8-btn");
+  if(copyBtn){
+    var hasQ8=(dbDraft.a8&&dbDraft.a8.filter(function(a){return a.text&&a.text.trim();}).length>0);
+    copyBtn.disabled=!hasQ8;
+    copyBtn.style.opacity=hasQ8?"1":"0.45";
+  }
+  if(!dbDraft.a10||!dbDraft.a10.length){
+    list.innerHTML="<div style=\"font-size:12px;color:var(--txt3);padding:8px 0;\">No actions yet. Tap + Add Action or Copy from Q8 to plan tomorrow.</div>";
+    return;
+  }
+  list.innerHTML=dbDraft.a10.map(function(a,i){
+    var sourceBadge=a.source==="q8_copy"?"<span style=\"font-size:9px;font-weight:800;color:var(--purple);background:rgba(167,139,250,.12);padding:2px 5px;border-radius:4px;flex-shrink:0;\">from Q8</span>":"";
+    return "<div class=\"db-act10\">"+
+      "<div style=\"display:flex;flex-direction:column;gap:3px;\">"+
+        "<div class=\"db-ord\" onclick=\"A.dbMoveAction10('"+a.id+"',-1)\">&#9650;</div>"+
+        "<div class=\"db-ord\" onclick=\"A.dbMoveAction10('"+a.id+"',1)\">&#9660;</div>"+
+      "</div>"+
+      "<div class=\"db-act10-txt\" onclick=\"A.dbEditAction10('"+a.id+"')\" style=\"cursor:pointer;\">"+a.text+"</div>"+
+      sourceBadge+
+      "<div style=\"font-size:11px;color:var(--txt3);cursor:pointer;\" onclick=\"A.dbEditAction10('"+a.id+"')\">&#9998;</div>"+
+      "</div>";
+  }).join("");
+},
+
+
+
+dbUpdateProgress:function(){
+  var score=0,total=12;
+  if(dbDraft.a1&&dbDraft.a1.trim())score++;
+  if(dbDraft.a2_touched)score++;
+  if(dbDraft.a2_touched&&dbDraft.a2_score<10){if(dbDraft.a3&&dbDraft.a3.trim())score++;}else if(dbDraft.a2_touched&&dbDraft.a2_score===10){score++;}
+  if(dbDraft.a4&&dbDraft.a4.trim())score++;
+  if(dbDraft.a5)score++; // Q5: manually answered Yes or No
+  if(dbDraft.a6&&dbDraft.a6.trim())score++;
+  if(dbDraft.a7&&dbDraft.a7.trim())score++;
+  var a8Done=dbDraft.a8&&dbDraft.a8.length>0&&dbDraft.a8.every(function(a){return a.result;});
+  if(a8Done)score++;
+  if(dbDraft.a9&&dbDraft.a9.trim())score++;
+  var a10Done=dbDraft.a10&&dbDraft.a10.length>0;
+  if(a10Done)score++;
+  if(dbDraft.a11&&dbDraft.a11.trim())score++;
+  if(dbDraft.a12&&dbDraft.a12.trim())score++;
+
+  var pLbl=document.getElementById("db-progress-lbl");
+  var sLbl=document.getElementById("db-status-lbl");
+  if(pLbl)pLbl.textContent=score+" / "+total+" answered";
+  if(sLbl){
+    if(dbDraft.status==="completed"){
+      sLbl.textContent=dbDraft.lastEditedAt?"Completed (edited)":"Completed";
+      sLbl.style.color="var(--green)";
+    }else{
+      sLbl.textContent="Draft";
+      sLbl.style.color="var(--gold)";
+    }
+  }
+  // Highlight answered questions
+  var qMap={1:dbDraft.a1&&dbDraft.a1.trim(),2:dbDraft.a2_touched,4:dbDraft.a4&&dbDraft.a4.trim(),5:dbDraft.a5,6:dbDraft.a6&&dbDraft.a6.trim(),7:dbDraft.a7&&dbDraft.a7.trim(),8:a8Done,9:dbDraft.a9&&dbDraft.a9.trim(),10:a10Done,11:dbDraft.a11&&dbDraft.a11.trim(),12:dbDraft.a12&&dbDraft.a12.trim()};
+  var q3ans=(dbDraft.a2_touched&&dbDraft.a2_score===10)||(dbDraft.a3&&dbDraft.a3.trim());
+  qMap[3]=q3ans;
+  Object.keys(qMap).forEach(function(n){var el=document.getElementById("dbq-"+n);if(el)el.classList.toggle("answered",!!qMap[n]);});
+},
+
+_dbValidate:function(){
+  var errs=[];
+  if(!dbDraft.a1||!dbDraft.a1.trim())errs.push("Q1: Mindset and attitude");
+  if(!dbDraft.a2_touched)errs.push("Q2: Performance score (move the slider)");
+  if(dbDraft.a2_touched&&dbDraft.a2_score<10&&(!dbDraft.a3||!dbDraft.a3.trim()))errs.push("Q3: Improvement to reach 10");
+  if(!dbDraft.a4||!dbDraft.a4.trim())errs.push("Q4: Learning from audios and books");
+  if(!dbDraft.a5)errs.push("Q5: Did I complete my top actions? (select Yes or No)");
+  if(!dbDraft.a6||!dbDraft.a6.trim())errs.push("Q6: Biggest roadblock");
+  if(!dbDraft.a7||!dbDraft.a7.trim())errs.push("Q7: Comfort zone activity");
+  if(!dbDraft.a8||!dbDraft.a8.length)errs.push("Q8: At least one action required");
+  else if(!dbDraft.a8.every(function(a){return a.result;}))errs.push("Q8: All actions need a tick or cross");
+  if(!dbDraft.a9||!dbDraft.a9.trim())errs.push("Q9: Gratitude");
+  if(!dbDraft.a10||!dbDraft.a10.length)errs.push("Q10: At least one tomorrow action required");
+  if(!dbDraft.a11||!dbDraft.a11.trim())errs.push("Q11: Business progress");
+  if(!dbDraft.a12||!dbDraft.a12.trim())errs.push("Q12: Action statement for tomorrow");
+  return errs;
+},
+
+completeDebrief:function(){
+  A.dbChange();
+  var errs=A._dbValidate();
+  var vmsg=document.getElementById("db-validation-msg");
+  if(errs.length){
+    if(vmsg){vmsg.style.display="block";vmsg.innerHTML="<b>Please complete:</b><br>"+errs.join("<br>");}
+    document.getElementById("db-questions").scrollTop=0;
+    return;
+  }
+  if(vmsg)vmsg.style.display="none";
+  var now=Date.now();
+  // Preserve original completedAt; update lastEditedAt only if re-completing
+  if(!dbDraft.completedAt)dbDraft.completedAt=now;
+  else dbDraft.lastEditedAt=now;
+  dbDraft.lastEditedBy=me&&me.id;
+  dbDraft.status="completed";
+  fbSet("hip_v1/debriefs/"+me.id+"/"+curDbDate,dbDraft).then(function(){
+    showCel("&#128142;","Debrief Complete!","Great work reflecting on today. Tomorrow's actions are locked in.");
+    A.renderDebrief(curDbDate);
+  });
+},
+
+saveDebrief:function(){
+  A.dbChange();
+  var now=Date.now();
+  // Preserve completedAt if already completed; add lastEditedAt
+  if(dbDraft.completedAt){dbDraft.lastEditedAt=now;dbDraft.lastEditedBy=me&&me.id;}
+  // If editing a completed debrief, validate required fields
+  // If any required field is now missing, drop back to draft
+  if(dbDraft.status==="completed"){
+    var errs=A._dbValidate();
+    if(errs.length){
+      dbDraft.status="draft";
+      var vmsg=document.getElementById("db-validation-msg");
+      if(vmsg){vmsg.style.display="block";vmsg.innerHTML="<b>Debrief returned to Draft — please complete:</b><br>"+errs.join("<br>");}
+    }
+  }
+  fbSet("hip_v1/debriefs/"+me.id+"/"+curDbDate,dbDraft).then(function(){
+    A.renderDebrief(curDbDate);
+    var sl=document.getElementById("db-status-lbl");
+    if(sl){var prev=sl.textContent,prevCol=sl.style.color;sl.textContent="Saved";sl.style.color="var(--green)";setTimeout(function(){sl.textContent=prev;sl.style.color=prevCol;},1500);}
+  }).catch(function(){alert("Save failed. Please check your connection.");});
+},
+
+copyDebrief:function(){
+  // BUG-005 FIX: do NOT call dbChange() or any async operation before clipboard write.
+  // Clipboard API requires the call to happen synchronously within the user gesture.
+  // Read current field values directly for copy — do not depend on dbDraft being current.
+  console.log("DEBRIEF_COPY_CLICK date="+curDbDate+" user="+(me?me.id:"none")+" status="+(dbDraft?dbDraft.status:"none"));
+
+  // Sync text fields into dbDraft without triggering autoSave
+  var fields=["a1","a3","a4","a6","a7","a9","a11","a12"];
+  fields.forEach(function(f){var el=document.getElementById("db-"+f);if(el)dbDraft[f]=el.value;});
+
+  var d=dbDraft||{};
+  var lines=["DAILY DEBRIEF","Date: "+fmtK(curDbDate||today()),"Name: "+(me?me.name:""),"Status: "+(d.status==="completed"?"Completed":"In progress"),""];
+  lines.push("1. How was my mindset and attitude today?");
+  lines.push(d.a1&&d.a1.trim()?d.a1.trim():"(not answered)");
+  lines.push("");
+  lines.push("2. Performance score");
+  lines.push(d.a2_touched?(d.a2_score+"/10"):"(not answered)");
+  lines.push("");
+  lines.push("3. What do I need to improve to achieve 10?");
+  lines.push((d.a2_touched&&d.a2_score===10)?"(scored 10 — not required)":(d.a3&&d.a3.trim()?d.a3.trim():"(not answered)"));
+  lines.push("");
+  lines.push("4. What did I learn from audios and books today?");
+  lines.push(d.a4&&d.a4.trim()?d.a4.trim():"(not answered)");
+  lines.push("");
+  lines.push("5. Did I complete my top actions for the day?");
+  lines.push(d.a5==="yes"?"Yes":d.a5==="no"?"No":"(not answered)");
+  lines.push("");
+  lines.push("6. What was my biggest roadblock today, and what can I do to improve this tomorrow?");
+  lines.push(d.a6&&d.a6.trim()?d.a6.trim():"(not answered)");
+  lines.push("");
+  lines.push("7. What did I do today to push myself or move outside my comfort zone?");
+  lines.push(d.a7&&d.a7.trim()?d.a7.trim():"(not answered)");
+  lines.push("");
+  lines.push("8. Actions achieved for the day");
+  if(d.a8&&d.a8.length){
+    d.a8.forEach(function(a){
+      var mark=a.result==="tick"?"✓":a.result==="cross"?"✗":"○";
+      lines.push(mark+" "+(a.text||"").replace(/\n/g," ")+(a.addedToday?" [added today]":""));
+    });
+  }else{lines.push("(none)");}
+  lines.push("");
+  lines.push("9. What am I most grateful for today?");
+  lines.push(d.a9&&d.a9.trim()?d.a9.trim():"(not answered)");
+  lines.push("");
+  lines.push("10. Top things I need to do tomorrow");
+  if(d.a10&&d.a10.length){
+    d.a10.forEach(function(a,i){lines.push((i+1)+". "+(a.text||"").replace(/\n/g," "));});
+  }else{lines.push("(none)");}
+  lines.push("");
+  lines.push("11. What did I do today to move my business forward?");
+  lines.push(d.a11&&d.a11.trim()?d.a11.trim():"(not answered)");
+  lines.push("");
+  lines.push("12. Action statement for tomorrow");
+  lines.push(d.a12&&d.a12.trim()?d.a12.trim():"(not answered)");
+
+  var txt=lines.join("\n");
+  if(typeof txt!=="string"||!txt){console.error("DEBRIEF_COPY_FAILURE text is empty or invalid");alert("Unable to copy the Daily Debrief. Please try again.");return;}
+  console.log("DEBRIEF_COPY_TEXT_BUILT chars="+txt.length);
+
+  var inSecureContext=window.isSecureContext!==false;
+  var clipAvail=!!(navigator&&navigator.clipboard&&navigator.clipboard.writeText);
+  console.log("DEBRIEF_COPY_ATTEMPT clipboardAPI="+clipAvail+" secureContext="+inSecureContext);
+
+  if(clipAvail){
+    // Primary: Clipboard API — called immediately (still within user gesture)
+    navigator.clipboard.writeText(txt).then(function(){
+      console.log("DEBRIEF_COPY_SUCCESS method=clipboard chars="+txt.length);
+      A._dbCopyFeedback(true);
+    }).catch(function(err){
+      console.warn("DEBRIEF_COPY_FAILURE method=clipboard err="+(err&&err.name));
+      // Try fallback before giving up
+      var ok=A._dbCopyFallback(txt);
+      A._dbCopyFeedback(ok);
+    });
+  }else{
+    // Fallback: execCommand (deprecated but works in many mobile browsers)
+    var ok=A._dbCopyFallback(txt);
+    A._dbCopyFeedback(ok);
+  }
+},
+
+_dbCopyFallback:function(txt){
+  try{
+    var ta=document.createElement("textarea");
+    ta.value=txt;
+    ta.style.cssText="position:fixed;top:-9999px;left:-9999px;opacity:0;";
+    document.body.appendChild(ta);
+    ta.focus();ta.select();
+    var ok=document.execCommand("copy");
+    document.body.removeChild(ta);
+    console.log("DEBRIEF_COPY_"+(ok?"SUCCESS":"FAILURE")+" method=execCommand");
+    return ok;
+  }catch(e){
+    console.error("DEBRIEF_COPY_FAILURE method=execCommand err="+(e&&e.message));
+    return false;
+  }
+},
+
+_dbCopyFeedback:function(success){
+  var btn=document.getElementById("db-copy-btn");
+  if(success){
+    if(btn){var prev=btn.innerHTML;btn.innerHTML="&#10003;";btn.style.color="var(--green)";setTimeout(function(){btn.innerHTML=prev;btn.style.color="";},1800);}
+  }else{
+    alert("Unable to copy the Daily Debrief. Please try again.\n\nIf this keeps failing, try using the Share button in your browser.");
+  }
+},
+
+renderDebriefList:function(){
+  var body=document.getElementById("db-list-body");
+  if(!body)return;
+  // Load Q8 from most recent completed debrief for rollover
+  var keys=Object.keys(debriefs).sort().reverse();
+  if(!keys.length){
+    body.innerHTML="<div class=\"empty\"><div class=\"empty-ico\">&#128221;</div><div class=\"empty-txt\">No debriefs yet.<br>Tap + to start today's debrief.</div></div>";
+    return;
+  }
+  body.innerHTML=keys.map(function(k){
+    var d=debriefs[k];
+    var isToday=k===today(),statusClass=d.status==="completed"?"db-status-completed":"db-status-draft";
+    var statusLbl=d.status==="completed"?"Completed":"Draft";
+    var score=d.a2_touched?d.a2_score+"/10":"";
+    return "<div class=\"db-list-row\" onclick=\"A.startDebrief('"+k+"')\">"+
+      "<div style=\"flex:1;\"><div style=\"font-size:15px;font-weight:800;\">"+(isToday?"Today":fmtK(k))+"</div>"+
+      (score?"<div style=\"font-size:12px;color:var(--txt2);margin-top:2px;\">Score: "+score+"</div>":"")+"</div>"+
+      "<span class=\"db-list-status "+statusClass+"\">"+statusLbl+"</span>"+
+      "<div style=\"font-size:16px;color:var(--txt3);\">&#8250;</div></div>";
+  }).join("");
+},
+
+// Get Q10 from most recent completed debrief before dateKey for Q8 rollover
+getQ10Rollover:function(dateKey){
+  var keys=Object.keys(debriefs).filter(function(k){return k<dateKey&&debriefs[k].status==="completed"&&debriefs[k].a10&&debriefs[k].a10.length;}).sort();
+  if(!keys.length)return [];
+  var src=debriefs[keys[keys.length-1]].a10;
+  // Create fresh copies without tick/cross — these become Q8 checklist items
+  return src.map(function(a){return {id:"a8_"+a.id+"_"+Date.now()+"_"+Math.random().toString(36).slice(2),text:a.text,result:"",addedToday:false};});
+},
+
+// ── CUSTOM GOALS — HELPERS ────────────────────────────────────────────────────
+cgActiveDefs:function(){return cgDefs.filter(function(g){return g.active!==false;}).sort(function(a,b){return (a.displayOrder||0)-(b.displayOrder||0);});},
+cgAllDefs:function(){return cgDefs;},
+
+// Get period total for a custom goal
+cgPeriodTotal:function(goalId,period,refDate){
+  refDate=refDate||new Date();
+  var t=dk(refDate),keys=[],val=0;
+  if(period==="daily"){keys=[t];}
+  else if(period==="weekly"){
+    // Monday-start ISO week in NZ local time
+    var wk=wkOf(refDate);
+    keys=Object.keys(customGoalData).filter(function(k){return k>=wk&&k<=t;});
+  }else if(period==="monthly"){
+    var mo=moOf(refDate);
+    keys=Object.keys(customGoalData).filter(function(k){return k.slice(0,6)===mo.slice(0,6)&&k<=t;});
+  }else if(period==="yearly"){
+    var yr=yrOf(refDate);
+    keys=Object.keys(customGoalData).filter(function(k){return k.slice(0,4)===yr&&k<=t;});
+  }
+  keys.forEach(function(k){
+    var dayEntry=customGoalData[k];
+    if(dayEntry&&dayEntry[goalId])val+=(dayEntry[goalId].value||0);
+  });
+  return val;
+},
+
+// ── CUSTOM GOALS — SETTINGS ───────────────────────────────────────────────────
+cgShowForm:function(goalId){
+  document.getElementById("cg-form").style.display="block";
+  document.getElementById("cg-err").style.display="none";
+  if(goalId){
+    var g=cgDefs.find(function(x){return x.id===goalId;});
+    if(!g)return;
+    document.getElementById("cg-edit-id").value=goalId;
+    document.getElementById("cg-name").value=g.name||"";
+    document.getElementById("cg-qty").value=g.targetQuantity||1;
+    document.getElementById("cg-period").value=g.period||"daily";
+  }else{
+    document.getElementById("cg-edit-id").value="";
+    document.getElementById("cg-name").value="";
+    document.getElementById("cg-qty").value="";
+    document.getElementById("cg-period").value="daily";
+  }
+  document.getElementById("cg-name").focus();
+},
+
+cgCancelForm:function(){
+  document.getElementById("cg-form").style.display="none";
+  document.getElementById("cg-err").style.display="none";
+},
+
+cgShowErr:function(msg){
+  var e=document.getElementById("cg-err");
+  e.textContent=msg;e.style.display="block";
+},
+
+cgSave:function(){
+  var name=(document.getElementById("cg-name").value||"").trim();
+  var qtyRaw=document.getElementById("cg-qty").value;
+  var period=document.getElementById("cg-period").value;
+  var editId=document.getElementById("cg-edit-id").value||"";
+
+  // Validation
+  if(!name)return A.cgShowErr("Goal name is required.");
+  if(name.length>50)return A.cgShowErr("Goal name must be 50 characters or fewer.");
+  if(qtyRaw===""||qtyRaw===null)return A.cgShowErr("Target quantity is required.");
+  if(qtyRaw.indexOf&&qtyRaw.indexOf(".")>-1)return A.cgShowErr("Target quantity must be a whole number.");
+  var qty=parseInt(qtyRaw,10);
+  if(isNaN(qty)||String(parseInt(qtyRaw,10))!==String(parseFloat(qtyRaw)))return A.cgShowErr("Target quantity must be a whole number.");
+  if(qty<1)return A.cgShowErr("Target quantity must be at least 1.");
+  if(qty>999)return A.cgShowErr("Target quantity must not exceed 999.");
+  if(["daily","weekly","monthly","yearly"].indexOf(period)<0)return A.cgShowErr("Please select a valid duration.");
+
+  // Duplicate name check (case-insensitive, excluding current edit target)
+  var lower=name.toLowerCase();
+  var dup=cgDefs.find(function(g){return g.active!==false&&g.id!==editId&&(g.name||"").toLowerCase()===lower;});
+  if(dup)return A.cgShowErr("An active custom goal with this name already exists.");
+
+  var now=Date.now();
+  var goalId=editId||("cg_"+now+"_"+Math.random().toString(36).slice(2,7));
+  var existing=editId?cgDefs.find(function(g){return g.id===editId;}):null;
+
+  var goalObj={
+    id:goalId,
+    name:name,
+    targetQuantity:qty,
+    period:period,
+    active:true,
+    displayOrder:existing?existing.displayOrder:(cgDefs.filter(function(g){return g.active!==false;}).length),
+    createdAt:existing?existing.createdAt:now,
+    updatedAt:now,
+    archivedAt:null,
+    effectiveFrom:now
+  };
+
+  fbSet("hip_v1/profiles/"+me.id+"/customGoals/"+goalId,goalObj).then(function(){
+    // Update local cgDefs
+    if(editId){var idx=cgDefs.findIndex(function(g){return g.id===editId;});if(idx>=0)cgDefs[idx]=goalObj;else cgDefs.push(goalObj);}
+    else{cgDefs.push(goalObj);}
+    A.cgCancelForm();
+    A.cgRenderList();
+    renderMain(); // refresh tracking view
+  }).catch(function(err){A.cgShowErr("Save failed. Please try again.");});
+},
+
+cgRenderList:function(){
+  // Ensure cgDefs is current from profiles
+  if(me&&profiles[me.id]&&profiles[me.id].customGoals){
+    cgDefs=Object.values(profiles[me.id].customGoals)||[];
+  }
+  var el=document.getElementById("cg-list");if(!el)return;
+  var active=A.cgActiveDefs();
+  var archived=cgDefs.filter(function(g){return g.active===false;});
+  var html="";
+  if(!active.length&&!archived.length){
+    html="<div style=\"font-size:13px;color:var(--txt3);padding:10px 0;\">No custom goals added yet.</div>";
+  }else{
+    active.forEach(function(g,i){
+      html+="<div class=\"gitem\" style=\"position:relative;\">"+
+        "<div style=\"flex:1;\"><div style=\"font-size:13px;font-weight:700;\">"+g.name+"</div>"+
+        "<div style=\"font-size:11px;color:var(--txt3);margin-top:2px;\">"+g.targetQuantity+" "+g.period+"</div></div>"+
+        "<div style=\"display:flex;gap:6px;align-items:center;\">"+
+          "<button class=\"db-ord\" onclick=\"A.cgMove('"+g.id+"',-1)\" title=\"Move up\">&#9650;</button>"+
+          "<button class=\"db-ord\" onclick=\"A.cgMove('"+g.id+"',1)\" title=\"Move down\">&#9660;</button>"+
+          "<button class=\"btn btn-s\" style=\"padding:6px 10px;font-size:11px;\" onclick=\"A.cgShowForm('"+g.id+"')\">Edit</button>"+
+          "<button class=\"btn btn-g\" style=\"padding:6px 10px;font-size:11px;color:var(--gold);\" onclick=\"A.cgArchive('"+g.id+"')\">Archive</button>"+
+        "</div></div>";
+    });
+    if(archived.length){
+      html+="<div style=\"font-size:11px;font-weight:800;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin:12px 0 6px;\">Archived</div>";
+      archived.forEach(function(g){
+        html+="<div class=\"gitem\" style=\"opacity:0.55;\">"+
+          "<div style=\"flex:1;\"><div style=\"font-size:13px;font-weight:700;\">"+g.name+"</div>"+
+          "<div style=\"font-size:11px;color:var(--txt3);margin-top:2px;\">"+g.targetQuantity+" "+g.period+" &middot; archived</div></div>"+
+          "<button class=\"btn btn-s\" style=\"padding:6px 10px;font-size:11px;\" onclick=\"A.cgRestore('"+g.id+"')\">Restore</button>"+
+        "</div>";
+      });
+    }
+  }
+  el.innerHTML=html;
+},
+
+cgArchive:function(goalId){
+  if(!confirm("Archive this goal? It will leave current tracking but remain in historical reports."))return;
+  var g=cgDefs.find(function(x){return x.id===goalId;});if(!g)return;
+  g.active=false;g.archivedAt=Date.now();g.updatedAt=Date.now();
+  fbSet("hip_v1/profiles/"+me.id+"/customGoals/"+goalId,g).then(function(){
+    A.cgRenderList();renderMain();
+  });
+},
+
+cgRestore:function(goalId){
+  var g=cgDefs.find(function(x){return x.id===goalId;});if(!g)return;
+  g.active=true;g.archivedAt=null;g.updatedAt=Date.now();
+  g.displayOrder=cgDefs.filter(function(x){return x.active===true;}).length;
+  fbSet("hip_v1/profiles/"+me.id+"/customGoals/"+goalId,g).then(function(){
+    A.cgRenderList();renderMain();
+  });
+},
+
+cgMove:function(goalId,dir){
+  var active=A.cgActiveDefs();
+  var idx=active.findIndex(function(g){return g.id===goalId;});
+  if(idx<0)return;
+  var nIdx=idx+dir;
+  if(nIdx<0||nIdx>=active.length)return;
+  var tmp=active[idx].displayOrder;
+  active[idx].displayOrder=active[nIdx].displayOrder;
+  active[nIdx].displayOrder=tmp;
+  var updates={};
+  updates["hip_v1/profiles/"+me.id+"/customGoals/"+active[idx].id+"/displayOrder"]=active[idx].displayOrder;
+  updates["hip_v1/profiles/"+me.id+"/customGoals/"+active[nIdx].id+"/displayOrder"]=active[nIdx].displayOrder;
+  fbUpd("/",updates).then(function(){A.cgRenderList();renderMain();});
+},
+
+// ── CUSTOM GOALS — TRACKING ───────────────────────────────────────────────────
+cgInc:function(goalId){
+  if(!me)return;
+  var k=curDateKey||today();
+  var g=cgDefs.find(function(x){return x.id===goalId;});if(!g)return;
+  R("hip_v1/customGoalData/"+me.id+"/"+k+"/"+goalId).once("value").then(function(snap){
+    var cur=snap.exists()?snap.val():{value:0};
+    var nv=(cur.value||0)+1;
+    var entry={value:nv,goalNameSnapshot:g.name,targetSnapshot:g.targetQuantity,periodSnapshot:g.period,updatedAt:Date.now()};
+    return fbSet("hip_v1/customGoalData/"+me.id+"/"+k+"/"+goalId,entry);
+  }).then(function(){
+    if(!customGoalData[k])customGoalData[k]={};
+    // Will be refreshed by listener but update locally for immediate feedback
+    renderCGTrack();
+    if(curTab===1)renderCGPeriod("week");
+    if(curTab===2)renderCGPeriod("month");
+    if(curTab===3)renderCGPeriod("year");
+  }).catch(function(){alert("Save failed. Please check your connection.");});
+},
+
+cgDec:function(goalId){
+  if(!me)return;
+  var k=curDateKey||today();
+  R("hip_v1/customGoalData/"+me.id+"/"+k+"/"+goalId).once("value").then(function(snap){
+    var cur=snap.exists()?snap.val():{value:0};
+    var nv=Math.max(0,(cur.value||0)-1);
+    var g=cgDefs.find(function(x){return x.id===goalId;})||{};
+    var entry={value:nv,goalNameSnapshot:g.name||"",targetSnapshot:g.targetQuantity||1,periodSnapshot:g.period||"daily",updatedAt:Date.now()};
+    return fbSet("hip_v1/customGoalData/"+me.id+"/"+k+"/"+goalId,entry);
+  }).then(function(){renderCGTrack();}).catch(function(){alert("Save failed. Please check your connection.");});
+},
+
+// ── RED RUNNER METHODS ────────────────────────────────────────────────────────
+
+// Return the user's current active RR assignment (own) or null
+rrMyActive:function(uid){
+  uid=uid||(me&&me.id);
+  // Search rrAllAssignments directly — never the filtered view
+  return rrAllAssignments.find(function(a){
+    return a.userId===uid&&A.rrGetStatus(a)==="current";
+  })||null;
+},
+
+rrMyUpcoming:function(uid){
+  uid=uid||(me&&me.id);
+  return rrAllAssignments.find(function(a){
+    return a.userId===uid&&A.rrGetStatus(a)==="upcoming";
+  })||null;
+},
+
+// Duration display — informational only, does not set or restrict dates
+rrUpdateDuration:function(){
+  var startVal=document.getElementById("rr-start").value;
+  var endVal=document.getElementById("rr-end").value;
+  var wrap=document.getElementById("rr-duration-wrap");
+  var lbl=document.getElementById("rr-duration-lbl");
+  if(!wrap||!lbl)return;
+  if(!startVal||!endVal){wrap.style.display="none";return;}
+  var sP=startVal.split("-"),eP=endVal.split("-");
+  var sD=new Date(parseInt(sP[0]),parseInt(sP[1])-1,parseInt(sP[2]));
+  var eD=new Date(parseInt(eP[0]),parseInt(eP[1])-1,parseInt(eP[2]));
+  var days=Math.round((eD-sD)/86400000)+1; // inclusive
+  wrap.style.display="block";
+  if(days<1){lbl.textContent="End date is before start date.";lbl.style.color="var(--red)";return;}
+  lbl.style.color="var(--txt2)";
+  var wks=Math.floor((days-1)/7),rem=(days-1)%7;
+  var durStr=wks>0?(wks+" week"+(wks!==1?"s":"")+(rem>0?" and "+rem+" day"+(rem!==1?"s":""):"")):(days+" day"+(days!==1?"s":""));
+  lbl.textContent="Programme duration: "+durStr+" ("+days+" day"+(days!==1?"s":"")+")";
+},
+
+
+rrPopulateUserSel:function(){
+  var sel=document.getElementById("rr-user-sel");if(!sel)return;
+  var opts=["<option value=''>— Select a user —</option>"];
+  var eligible=Object.values(profiles).filter(function(p){
+    if(isAdmin()){
+      return p.role==="member"||p.role==="mentor";
+    }else if(isMentor(me.id)){
+      return p.id!==me.id&&isMentorLinked(me.id,p.id)&&(p.role==="member"||p.role==="mentor");
+    }
+    return false;
+  });
+  eligible.forEach(function(p){
+    // Only block selection if user has an active (current or upcoming) non-cancelled assignment
+    var existing=rrAllAssignments.find(function(a){
+      if(a.userId!==p.id)return false;
+      var st=A.rrGetStatus(a);
+      return st==="current"||st==="upcoming";
+    });
+    var suffix=existing?" ("+A.rrGetStatus(existing)+")":"";
+    opts.push("<option value='"+p.id+"'"+(existing?" disabled":"")+">"+p.name+" ["+p.role+"]"+suffix+"</option>");
+  });
+  sel.innerHTML=opts.join("");
+},
+
+rrShowAllocForm:function(editId){
+  document.getElementById("rr-alloc-form").style.display="block";
+  document.getElementById("rr-form-err").style.display="none";
+  document.getElementById("rr-confirm-wrap").style.display="none";
+  var durWrap=document.getElementById("rr-duration-wrap");
+  if(durWrap)durWrap.style.display="none";
+  document.getElementById("rr-edit-id").value=editId||"";
+  document.getElementById("rr-start").value="";
+  document.getElementById("rr-end").value="";
+  document.getElementById("rr-note").value="";
+  A.rrPopulateUserSel();
+  if(editId){
+    var ex=rrAllAssignments.find(function(a){return a.id===editId;});
+    if(ex){
+      document.getElementById("rr-user-sel").value=ex.userId;
+      document.getElementById("rr-start").value=ex.startDate||"";
+      document.getElementById("rr-end").value=ex.endDate||"";
+      document.getElementById("rr-note").value=ex.note||"";
+      A.rrUpdateDuration();
+    }
+  }
+},
+
+rrHideAllocForm:function(){
+  document.getElementById("rr-alloc-form").style.display="none";
+},
+
+rrShowErr:function(msg){
+  var e=document.getElementById("rr-form-err");
+  if(e){e.textContent=msg;e.style.display="block";}
+},
+
+rrSaveAlloc:function(){
+  // Guard against double-submission
+  if(A._rrSaving){console.warn("RR_SAVE_BLOCKED: already saving");return;}
+  var _rrInvokeCount=(_rrInvokeCount||0)+1;
+  console.log("RR_SAVE_START invoke="+_rrInvokeCount);
+
+  var userId=document.getElementById("rr-user-sel").value;
+  var startDate=document.getElementById("rr-start").value;
+  var endDate=document.getElementById("rr-end").value;
+  var note=document.getElementById("rr-note").value.trim();
+  var editId=document.getElementById("rr-edit-id").value;
+
+  // Validation
+  if(!userId)return A.rrShowErr("Please select a user.");
+  if(!profiles[userId])return A.rrShowErr("User not found.");
+  if(!startDate)return A.rrShowErr("Start date is required.");
+  if(!endDate)return A.rrShowErr("End date is required.");
+
+  // Parse as NZ local dates
+  var sParts=startDate.split("-"),eParts=endDate.split("-");
+  var sD=new Date(parseInt(sParts[0]),parseInt(sParts[1])-1,parseInt(sParts[2]));
+  var eD=new Date(parseInt(eParts[0]),parseInt(eParts[1])-1,parseInt(eParts[2]));
+  if(isNaN(sD.getTime()))return A.rrShowErr("Start date is not a valid date.");
+  if(isNaN(eD.getTime()))return A.rrShowErr("End date is not a valid date.");
+  if(eD<sD)return A.rrShowErr("End date cannot be before the start date.");
+
+  // Permission check
+  if(!isAdmin()&&isMentor(me.id)){
+    if(userId===me.id)return A.rrShowErr("You cannot allocate yourself.");
+    if(!isMentorLinked(me.id,userId))return A.rrShowErr("You can only allocate accepted linked key accounts.");
+  }else if(!isAdmin()){
+    return A.rrShowErr("You do not have permission to allocate.");
+  }
+
+  // Overlap check (exclude current edit)
+  var overlap=rrAllAssignments.find(function(a){
+    if(a.userId!==userId)return false;
+    if(A.rrGetStatus(a)==="cancelled")return false;
+    if(editId&&a.id===editId)return false;
+    return a.startDate<=endDate&&a.endDate>=startDate;
+  });
+  if(overlap)return A.rrShowErr("This user already has an overlapping Red Runner assignment ("+overlap.startDate+" to "+overlap.endDate+").");
+
+  var now=Date.now();
+  console.log("RR_SAVE_START userId="+userId+" name="+(profiles[userId]&&profiles[userId].name)+" start="+startDate+" end="+endDate+" editId="+(editId||"new"));
+  // DATA INTEGRITY: verify userId is an EXISTING profile — never create a new one
+  if(!profiles[userId])return A.rrShowErr("Selected user not found. Please refresh and try again.");
+  if(userId===("u_"+Date.now()).slice(0,5))return A.rrShowErr("Invalid user selection.");
+  // Guard: assignment must reference existing userId — NEVER write to hip_v1/profiles
+  var assignId=editId||("rr_"+now+"_"+Math.random().toString(36).slice(2,7));
+  // Verify assignId does not collide with any profile ID
+  if(profiles[assignId])return A.rrShowErr("ID collision detected. Please try again.");
+
+  var record={
+    id:assignId,
+    userId:userId,
+    userNameSnapshot:(profiles[userId]&&profiles[userId].name)||"",
+    userRoleSnapshot:(profiles[userId]&&profiles[userId].role)||"",
+    allocatedByUserId:me.id,
+    allocatedByRole:me&&me.role||"",
+    mentorId:isMentor(me.id)?me.id:null,
+    startDate:startDate,
+    endDate:endDate,
+    note:note,
+    createdAt:editId?(rrAllAssignments.find(function(a){return a.id===editId;})||{}).createdAt||now:now,
+    updatedAt:now,
+    cancelledAt:null,
+    cancelledBy:null
+  };
+
+  // Disable button and set saving guard
+  var saveBtn=document.querySelector("#rr-alloc-form .btn-p");
+  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent="Saving...";}
+  A._rrSaving=true;
+
+  console.log("RR_SAVE_WRITING path=hip_v1/redRunnerAssignments/"+assignId+" record="+JSON.stringify({id:record.id,userId:record.userId,startDate:record.startDate,endDate:record.endDate}));
+  fbSet("hip_v1/redRunnerAssignments/"+assignId,record).then(function(){
+    console.log("RR_SAVE_CONFIRMED assignmentId="+assignId+" userId="+record.userId);
+    // Do NOT call rrRenderList() here — the Firebase listener will fire and render exactly once
+    A.rrHideAllocForm();
+    // Show success inline — no blocking alert()
+    var errEl=document.getElementById("rr-form-err");
+    if(errEl){
+      errEl.style.display="block";
+      errEl.style.color="var(--green)";
+      errEl.textContent="Saved: "+(profiles[userId]&&profiles[userId].name||userId)+" ("+startDate+" to "+endDate+")";
+      setTimeout(function(){errEl.style.display="none";errEl.style.color="var(--red)";},3000);
+    }
+  }).catch(function(err){
+    A.rrShowErr("Save failed. Please check your connection. "+(err.message||""));
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent="Allocate Red Runner";}
+  }).finally(function(){
+    A._rrSaving=false;
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent="Allocate Red Runner";}
+  });
+},
+
+rrCancel:function(id){
+  var a=rrAllAssignments.find(function(x){return x.id===id;});
+  if(!a)return;
+  var st=A.rrGetStatus(a);
+  if(st==="cancelled")return;
+  if(st==="completed"&&!isAdmin()){alert("Completed assignments cannot be cancelled.");return;}
+  if(!confirm("Cancel this Red Runner assignment for "+a.userNameSnapshot+"?\nThe assignment history will be retained."))return;
+  var updated=Object.assign({},a,{cancelledAt:Date.now(),cancelledBy:me.id,updatedAt:Date.now()});
+  fbSet("hip_v1/redRunnerAssignments/"+id,updated).then(function(){
+    // Firebase listener will re-render — do not call rrRenderList() here
+    applyRRTheme();
+  }).catch(function(err){alert("Cancel failed: "+err.message);});
+},
+
+rrDelete:function(id){
+  if(!isAdmin())return;
+  var a=rrAllAssignments.find(function(x){return x.id===id;});
+  if(!a)return;
+  var st=A.rrGetStatus(a);
+  if(st==="current"){if(!confirm("This assignment is currently active. Are you sure you want to permanently delete it for "+a.userNameSnapshot+"?\n\nThis cannot be undone."))return;}
+  else{if(!confirm("Permanently delete this Red Runner assignment for "+a.userNameSnapshot+"?\n\nThis cannot be undone."))return;}
+  fbSet("hip_v1/redRunnerAssignments/"+id,null).then(function(){
+    // Firebase listener will re-render — do not call rrRenderList() here
+    applyRRTheme();
+  }).catch(function(err){alert("Delete failed: "+err.message);});
+},
+
+rrSetTab:function(tab,el){
+  rrTab=tab;
+  ["current","upcoming","completed","cancelled"].forEach(function(t){
+    var b=document.getElementById("rr-tab-"+t);
+    if(b)b.classList.toggle("on",t===tab);
+  });
+  A.rrRenderList();
+},
+
+rrGetStatus:function(a){
+  if(a.cancelledAt||a.status==="cancelled")return "cancelled";
+  if(!a.startDate||!a.endDate)return "invalid";
+  // today() returns YYYYMMDD but dates are stored as YYYY-MM-DD.
+  // Convert today to YYYY-MM-DD for consistent string comparison.
+  var raw=today(); // "YYYYMMDD"
+  var t=raw.slice(0,4)+"-"+raw.slice(4,6)+"-"+raw.slice(6,8); // "YYYY-MM-DD"
+  if(a.startDate>t)return "upcoming";
+  if(a.endDate>=t)return "current";
+  return "completed";
+},
+
+rrRenderList:function(){
+  // Convenience: re-derive scoped assignments and render
+  // Only called from refreshRedRunnerState — never directly from event handlers
+  A.rrRenderListInternal(rrGetScopedAssignments());
+},
+
+rrRenderListInternal:function(scopedAssignments){
+  var el=document.getElementById("rr-list");if(!el)return;
+  var list=scopedAssignments.filter(function(a){return A.rrGetStatus(a)===rrTab;});
+  var emptyLabels={current:"No current Red Runner assignments.",upcoming:"No upcoming Red Runner assignments.",completed:"No completed Red Runner assignments.",cancelled:"No cancelled Red Runner assignments."};
+  if(!list.length){
+    el.innerHTML="<div class='empty'><div class='empty-ico'>&#128100;</div><div class='empty-txt'>"+(emptyLabels[rrTab]||"No assignments.")+"</div></div>";
+    return;
+  }
+  var statusLabels={current:"Current",upcoming:"Upcoming",completed:"Completed",cancelled:"Cancelled"};
+  var statusClasses={current:"rr-status-active",upcoming:"rr-status-upcoming",completed:"rr-status-completed",cancelled:"rr-status-cancelled"};
+  el.innerHTML="";
+  list.forEach(function(a){
+    var p=profiles[a.userId]||{name:a.userNameSnapshot||"Unknown",avatar:"&#128142;",id:a.userId};
+    var st=A.rrGetStatus(a);
+    var wk=st==="current"?A.rrCurrentWeek(a):null;
+    var daysRem=st==="current"?A.rrDaysRemaining(a):null;
+    var daysUntil=st==="upcoming"?A.rrDaysUntilStart(a):null;
+    var allocBy=profiles[a.allocatedByUserId]?profiles[a.allocatedByUserId].name:(a.allocatedByUserId||"");
+    var isAuthorisedMentor=isMentor(me.id)&&(a.allocatedByUserId===me.id||isMentorLinked(me.id,a.userId));
+    var canEdit=isAdmin()||(isAuthorisedMentor&&st!=="completed");
+    var canCancel=st!=="cancelled"&&(isAdmin()||isAuthorisedMentor);
+    var canDelete=isAdmin(); // Mentors cannot permanently delete
+    var subInfo=a.startDate+" to "+a.endDate;
+    if(st==="current"&&daysRem!==null)subInfo+=" &middot; "+(daysRem===0?"Ends today":daysRem+" days remaining");
+    if(st==="upcoming"&&daysUntil!==null)subInfo+=" &middot; Starts in "+daysUntil+" day"+(daysUntil!==1?"s":"");
+    if(st==="cancelled"&&a.cancelledAt)subInfo+=" &middot; Cancelled "+new Date(a.cancelledAt).toLocaleDateString("en-NZ");
+    var row=document.createElement("div");row.className="rr-row";
+    row.setAttribute("data-assignment-id",a.id);
+    row.setAttribute("data-user-id",a.userId);
+    row.innerHTML=avHtml(p,36)+
+      "<div style='flex:1;min-width:0;'>"+
+        "<div style='font-size:14px;font-weight:800;margin-bottom:2px;'>"+p.name+
+          " <span class='rr-row-status "+statusClasses[st]+"'>"+statusLabels[st]+"</span>"+
+          (wk?"<span style='font-size:10px;color:var(--rr-muted);margin-left:5px;'>Week "+wk+"</span>":"")+
+        "</div>"+
+        "<div style='font-size:11px;color:var(--txt3);'>"+subInfo+"</div>"+
+        "<div style='font-size:10px;color:var(--txt3);margin-top:2px;'>By: "+allocBy+"</div>"+
+        (a.note?"<div style='font-size:10px;color:var(--txt3);'>"+a.note+"</div>":"")+
+      "</div>"+
+      "<div id='rrbp-"+a.id+"' style='display:flex;flex-direction:column;gap:4px;flex-shrink:0;'></div>";
+    var btnWrap=row.querySelector("#rrbp-"+a.id);
+    if(canEdit&&btnWrap){var eb=document.createElement("button");eb.className="btn btn-s";eb.style.cssText="padding:4px 8px;font-size:10px;";eb.textContent="Edit";(function(id){eb.onclick=function(){A.rrShowAllocForm(id);};})(a.id);btnWrap.appendChild(eb);}
+    if(canCancel&&btnWrap){var cb=document.createElement("button");cb.className="btn btn-g";cb.style.cssText="padding:4px 8px;font-size:10px;color:var(--gold);";cb.textContent="Cancel";(function(id){cb.onclick=function(){A.rrCancel(id);};})(a.id);btnWrap.appendChild(cb);}
+    if(canDelete&&btnWrap){var db=document.createElement("button");db.className="btn btn-g";db.style.cssText="padding:4px 8px;font-size:10px;color:var(--red);";db.textContent="Delete";(function(id){db.onclick=function(){A.rrDelete(id);};})(a.id);btnWrap.appendChild(db);}
+    el.appendChild(row);
+  });
+},
+
+rrCurrentWeek:function(a){
+  if(!a||!a.startDate)return 1;
+  var sParts=a.startDate.split("-");
+  var sDate=new Date(parseInt(sParts[0]),parseInt(sParts[1])-1,parseInt(sParts[2]));
+  var raw=today();
+  var tDate=new Date(parseInt(raw.slice(0,4)),parseInt(raw.slice(4,6))-1,parseInt(raw.slice(6,8)));
+  sDate.setHours(0,0,0,0);tDate.setHours(0,0,0,0);
+  var diffDays=Math.max(0,Math.round((tDate-sDate)/86400000));
+  return Math.floor(diffDays/7)+1;
+},
+
+rrDaysRemaining:function(a){
+  if(!a||!a.endDate)return 0;
+  var eParts=a.endDate.split("-");
+  var eDate=new Date(parseInt(eParts[0]),parseInt(eParts[1])-1,parseInt(eParts[2]));
+  // today() returns YYYYMMDD — parse to local date
+  var raw=today();
+  var tDate=new Date(parseInt(raw.slice(0,4)),parseInt(raw.slice(4,6))-1,parseInt(raw.slice(6,8)));
+  eDate.setHours(0,0,0,0);tDate.setHours(0,0,0,0);
+  return Math.max(0,Math.round((eDate-tDate)/86400000));
+},
+
+rrDaysUntilStart:function(a){
+  if(!a||!a.startDate)return 0;
+  var sParts=a.startDate.split("-");
+  var sDate=new Date(parseInt(sParts[0]),parseInt(sParts[1])-1,parseInt(sParts[2]));
+  var raw=today();
+  var tDate=new Date(parseInt(raw.slice(0,4)),parseInt(raw.slice(4,6))-1,parseInt(raw.slice(6,8)));
+  sDate.setHours(0,0,0,0);tDate.setHours(0,0,0,0);
+  return Math.max(0,Math.round((sDate-tDate)/86400000));
+},
+
+rrRenderMemberView:function(){
+  var body=document.getElementById("rr-member-body");if(!body)return;
+  // Always derive from rrAllAssignments — never from a cached filtered view
+  var active=A.rrMyActive();
+  var upcoming=!active?A.rrMyUpcoming():null;
+  var a=active||upcoming;
+  if(!a){body.innerHTML="<div class='empty'><div class='empty-ico'>&#128100;</div><div class='empty-txt'>No active Red Runner programme.</div></div>";return;}
+  var st=A.rrGetStatus(a);
+  var wk=active?A.rrCurrentWeek(a):"-";
+  var daysRem=active?A.rrDaysRemaining(a):null;
+  var allocBy=profiles[a.allocatedByUserId]?profiles[a.allocatedByUserId].name:"Admin";
+  var daysUntilStart=upcoming?A.rrDaysUntilStart(a):0;
+  body.innerHTML=
+    "<div class='rr-header-wrap'>"+
+      "<div class='rr-header-bg'></div>"+
+      "<div class='rr-header-content'>"+
+        "<div class='rr-badge'>&#9679; RED RUNNER</div>"+
+        "<div class='rr-name'>"+(active?"Week "+wk:upcoming?"Starts in "+daysUntilStart+" day"+(daysUntilStart!==1?"s":""):"")+"</div>"+
+        "<div class='rr-dates'>"+a.startDate+" to "+a.endDate+"</div>"+
+        (active&&daysRem!==null?"<div class='rr-week'>"+(daysRem===0?"Ends today":daysRem+" days remaining")+"</div>":"")+
+        (upcoming?"<div class='rr-week' style='color:var(--gold);'>Upcoming</div>":"")+
+        "<div class='rr-motto'>A red traffic light means go, not stop.</div>"+
+      "</div>"+
+    "</div>"+
+    "<div class='card' style='background:var(--rr-panel);border-color:var(--rr-border);margin-bottom:10px;'>"+
+      "<div style='font-size:11px;font-weight:800;color:var(--rr-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;'>Programme</div>"+
+      "<div style='font-size:13px;color:var(--rr-text);margin-bottom:5px;'>Status: <b style='color:"+(active?"var(--rr-bright)":"var(--gold)")+"'>"+(active?"Current":"Upcoming")+"</b></div>"+
+      "<div style='font-size:13px;color:var(--rr-muted);margin-bottom:5px;'>Start: "+a.startDate+"</div>"+
+      "<div style='font-size:13px;color:var(--rr-muted);margin-bottom:5px;'>End: "+a.endDate+"</div>"+
+      "<div style='font-size:13px;color:var(--rr-muted);'>Allocated by: "+allocBy+"</div>"+
+    "</div>"+
+    "<div class='card' style='margin-bottom:10px;'>"+
+      "<div style='font-size:12px;font-weight:800;color:var(--txt2);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px;'>Red Runner Values</div>"+
+      ["Honour your word.","Focus relentlessly.","Uplift others.","Finish what you start.","Keep moving."].map(function(v){
+        return "<div style='font-size:13px;color:var(--txt2);padding:7px 0;border-bottom:1px solid var(--bd);'>&rsaquo; "+v+"</div>";
+      }).join("")+
+      "<div style='font-size:11px;color:var(--txt3);padding-top:8px;font-style:italic;'>CHARACTER GROWTH PRECEDES BUSINESS GROWTH</div>"+
+    "</div>"+
+    (a.note?"<div class='card' style='margin-bottom:10px;'><div style='font-size:11px;font-weight:700;color:var(--txt3);margin-bottom:5px;'>NOTE FROM ALLOCATOR</div><div style='font-size:13px;color:var(--txt2);'>"+a.note+"</div></div>":"");
+},
+
+// ── SPEECH-TO-TEXT ─────────────────────────────────────────────────────────────
+// Browser API detection
+_sttSupported:(function(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}()),
+// Active session state
+_sttInst:null,        // current SpeechRecognition instance
+_sttField:null,       // field ID currently listening
+_sttFinal:"",         // committed transcript so far this session
+_sttBaseText:"",      // text that was in the field before listening started
+
+sttToggle:function(fieldId){
+  if(!A._sttSupported){
+    A._sttSetStatus(fieldId,"Speech recognition is not supported on this device","err");
+    return;
+  }
+  if(A._sttField===fieldId&&A._sttInst){
+    // Already listening on this field — stop
+    A.sttStop(false);
+    return;
+  }
+  // Stop any existing session first
+  if(A._sttInst){A.sttStop(false);}
+  A.sttStart(fieldId);
+},
+
+sttStart:function(fieldId){
+  var ta=document.getElementById(fieldId);
+  if(!ta)return;
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){A._sttSetStatus(fieldId,"Speech recognition not available","err");return;}
+
+  A._sttField=fieldId;
+  A._sttFinal="";
+  A._sttBaseText=ta.value||""; // preserve existing content
+  A._sttInst=new SR();
+
+  var rec=A._sttInst;
+  rec.lang="en-NZ";
+  rec.continuous=true;
+  rec.interimResults=true;
+  rec.maxAlternatives=1;
+
+  A._sttSetBtn(fieldId,true);
+  A._sttSetStatus(fieldId,"Listening\u2026","listening");
+
+  rec.onresult=function(e){
+    var interim="",final_="";
+    for(var i=e.resultIndex;i<e.results.length;i++){
+      var t=e.results[i][0].transcript;
+      if(e.results[i].isFinal){final_+=t;}
+      else{interim+=t;}
+    }
+    if(final_){A._sttFinal+=final_;}
+    // Show committed + interim in field without triggering full save
+    var combined=(A._sttBaseText+(A._sttBaseText&&(A._sttFinal||interim)?" ":"")+(A._sttFinal+interim)).trim();
+    ta.value=combined;
+    // Trigger dbChange for autosave only on final segments
+    if(final_){
+      dbDraft[fieldId.replace("db-","")]=ta.value;
+      A.dbAutoSave();
+    }
+  };
+
+  rec.onerror=function(e){
+    var msg={
+      "not-allowed":"Microphone permission was denied",
+      "no-speech":"No speech was detected",
+      "audio-capture":"No microphone found",
+      "network":"Network error — check connection",
+      "aborted":"Voice input was interrupted",
+      "service-not-allowed":"Speech service not allowed"
+    }[e.error]||"Voice input error";
+    A._sttSetStatus(fieldId,msg,"err");
+    A._sttSetBtn(fieldId,false);
+    A._sttInst=null;
+    A._sttField=null;
+  };
+
+  rec.onend=function(){
+    // Session ended (may be natural end or stop called)
+    if(A._sttField===fieldId){
+      // Commit final text to draft if not already done
+      var ta2=document.getElementById(fieldId);
+      if(ta2&&A._sttFinal){
+        var committed=(A._sttBaseText+(A._sttBaseText&&A._sttFinal?" ":"")+(A._sttFinal)).trim();
+        ta2.value=committed;
+        dbDraft[fieldId.replace("db-","")]=committed;
+        A.dbAutoSave();
+      }
+      A._sttSetBtn(fieldId,false);
+      if(A._sttFinal){
+        A._sttSetStatus(fieldId,"Voice input saved","ok");
+        setTimeout(function(){A._sttSetStatus(fieldId,"","");},3000);
+      }else{
+        A._sttSetStatus(fieldId,"","");
+      }
+      A._sttField=null;
+      A._sttInst=null;
+    }
+  };
+
+  try{rec.start();}
+  catch(e){
+    A._sttSetStatus(fieldId,"Could not start microphone","err");
+    A._sttSetBtn(fieldId,false);
+    A._sttField=null;A._sttInst=null;
+  }
+},
+
+sttStop:function(clearStatus){
+  if(A._sttInst){
+    try{A._sttInst.stop();}catch(e){}
+  }
+  // onend will fire and clean up — just clear UI if forced
+  if(clearStatus!==false){
+    var fid=A._sttField;
+    if(fid){A._sttSetBtn(fid,false);A._sttSetStatus(fid,"","");}
+    A._sttField=null;A._sttInst=null;A._sttFinal="";
+  }
+},
+
+sttStopAll:function(){
+  // Called on logout, screen change, or debrief close
+  if(A._sttInst||A._sttField){A.sttStop(true);}
+},
+
+_sttSetBtn:function(fieldId,active){
+  var btn=document.getElementById("stt-btn-"+fieldId);
+  if(!btn)return;
+  btn.classList.toggle("stt-active",active);
+  btn.setAttribute("aria-label",(active?"Stop":"Start")+" voice input");
+  btn.innerHTML=active?"&#9632;":"&#127908;"; // stop square vs mic
+},
+
+_sttSetStatus:function(fieldId,msg,cls){
+  var el=document.getElementById("stt-status-"+fieldId);
+  if(!el)return;
+  el.textContent=msg;
+  el.className="stt-status"+(cls?" stt-"+cls:"");
+},
+
+_sttInitButtons:function(){
+  // On debrief open: hide buttons if not supported, show if supported
+  var fields=["db-a1","db-a3","db-a4","db-a6","db-a7","db-a9","db-a11","db-a12"];
+  var supported=A._sttSupported;
+  fields.forEach(function(fid){
+    var btn=document.getElementById("stt-btn-"+fid);
+    if(!btn)return;
+    if(!supported){
+      btn.classList.add("stt-unsupported");
+      btn.title="Speech recognition is not supported on this browser";
+    }else{
+      btn.classList.remove("stt-unsupported");
+    }
+  });
+},
+
+
+// ── FEAT-007 APPEARANCE ─────────────────────────────────────────────────────
+// Preference values: 'light' | 'dark' | 'system'
+// Local cache key: 'hip_ap'
+// Profile field: appearancePreference
+
+_apPref:function(){return localStorage.getItem('hip_ap')||'system';},
+
+_apResolved:function(pref){
+  pref=pref||A._apPref();
+  if(pref==='light')return 'light';
+  if(pref==='dark')return 'dark';
+  return window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+},
+
+_apApply:function(pref){
+  pref=pref||A._apPref();
+  var resolved=A._apResolved(pref);
+  document.documentElement.dataset.theme=resolved;
+  document.documentElement.dataset.themePref=pref;
+  var m=document.getElementById('m-theme-color');
+  if(m)m.content=resolved==='dark'?'#11172A':'#F7F9FC';
+  A._apUpdateToggle(resolved);
+  A._apUpdateButtons(pref);
+},
+
+_apUpdateToggle:function(resolved){
+  var btn=document.getElementById('ap-toggle');
+  if(!btn)return;
+  if(resolved==='dark'){
+    btn.innerHTML='&#9728;';btn.setAttribute('aria-label','Switch to light mode');btn.title='Switch to light mode';
+  }else{
+    btn.innerHTML='&#9790;';btn.setAttribute('aria-label','Switch to dark mode');btn.title='Switch to dark mode';
+  }
+},
+
+_apUpdateButtons:function(pref){
+  ['light','dark','system'].forEach(function(p){
+    var b=document.getElementById('ap-btn-'+p);
+    if(!b)return;
+    var active=p===pref;
+    b.setAttribute('aria-pressed',String(active));
+    b.style.borderColor=active?'var(--red)':'';
+    b.style.color=active?'var(--txt)':'';
+    b.style.fontWeight=active?'800':'700';
+  });
+},
+
+setAppearance:function(pref){
+  // Validate
+  if(['light','dark','system'].indexOf(pref)<0)return;
+  localStorage.setItem('hip_ap',pref);
+  A._apApply(pref);
+  // Save to Firebase profile (non-blocking, fails gracefully)
+  if(me&&me.id){
+    fbUpd('hip_v1/profiles/'+me.id,{appearancePreference:pref}).then(function(){
+      if(me)me.appearancePreference=pref;
+    }).catch(function(){});
+  }
+},
+
+toggleAppearance:function(){
+  // Quick toggle: always produces explicit light or dark (not system)
+  var resolved=A._apResolved();
+  A.setAppearance(resolved==='dark'?'light':'dark');
+},
+
+_apInit:function(){
+  // Called on Settings open — sync button states
+  A._apUpdateButtons(A._apPref());
+},
+
+_apLoadFromProfile:function(){
+  // Called after login — apply saved profile preference
+  if(!me||!me.appearancePreference)return;
+  var pref=me.appearancePreference;
+  if(['light','dark','system'].indexOf(pref)<0)return;
+  localStorage.setItem('hip_ap',pref);
+  A._apApply(pref);
+},
+
 hideCel:function(){document.getElementById("cel").style.display="none";}
 };
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
-function renderLogin(){var list=document.getElementById("login-list"),ps=Object.values(profiles);if(!ps.length){list.innerHTML="<div style=\"text-align:center;padding:24px;color:var(--txt3);\"><div style=\"font-size:36px;margin-bottom:8px;\">&#128100;</div><div style=\"font-weight:600;color:var(--txt2);\">No profiles yet.</div></div>";return;}list.innerHTML=ps.map(function(p){var roleTag=isAdmin(p.id)?"<span class=\"admin-badge\" style=\"margin-left:6px;\">Admin</span>":isMentor(p.id)?"<span class=\"mentor-badge\" style=\"margin-left:6px;\">Mentor</span>":"";var avEl=p.photo?"<img src=\""+p.photo+"\" style=\"width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;\">":"<div style=\"font-size:30px;width:44px;text-align:center;flex-shrink:0;\">"+(p.avatar||"&#128142;")+"</div>";return "<div onclick=\"A.startLogin('"+p.id+"')\" style=\"display:flex;align-items:center;gap:12px;padding:14px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r2);margin-bottom:8px;cursor:pointer;\" onpointerdown=\"this.style.background='var(--s3)'\" onpointerup=\"this.style.background='var(--s2)'\" onpointerleave=\"this.style.background='var(--s2)'\">"+avEl+"<div style=\"flex:1;\"><div style=\"font-size:16px;font-weight:800;\">"+p.name+roleTag+"</div><div style=\"font-size:12px;color:var(--txt3);\">Tap to sign in</div></div><div style=\"font-size:20px;color:var(--txt3);\">&#8250;</div></div>";}).join("");}
+function renderLogin(){var list=document.getElementById("login-list"),ps=Object.values(profiles);if(!ps.length){list.innerHTML="<div style=\"text-align:center;padding:24px;color:var(--txt3);\"><div style=\"font-size:36px;margin-bottom:8px;\">&#128100;</div><div style=\"font-weight:600;color:var(--txt2);\">No profiles yet.</div></div>";return;}list.innerHTML=ps.map(function(p){var roleTag=isAdmin(p.id)?"<span class=\"admin-badge\" style=\"margin-left:6px;\">Admin</span>":isMentor(p.id)?"<span class=\"mentor-badge\" style=\"margin-left:6px;\">Mentor</span>":"";var rrA=rrAllAssignments.find(function(a){return a.userId===p.id&&(A.rrGetStatus(a)==="current"||A.rrGetStatus(a)==="upcoming");});if(rrA){roleTag+="<span class=\"rr-upcoming-badge\">RR</span>";}var avEl=p.photo?"<img src=\""+p.photo+"\" style=\"width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;\">":"<div style=\"font-size:30px;width:44px;text-align:center;flex-shrink:0;\">"+(p.avatar||"&#128142;")+"</div>";return "<div onclick=\"A.startLogin('"+p.id+"')\" style=\"display:flex;align-items:center;gap:12px;padding:14px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r2);margin-bottom:8px;cursor:pointer;\" onpointerdown=\"this.style.background='var(--s3)'\" onpointerup=\"this.style.background='var(--s2)'\" onpointerleave=\"this.style.background='var(--s2)'\">"+avEl+"<div style=\"flex:1;\"><div style=\"font-size:16px;font-weight:800;\">"+p.name+roleTag+"</div><div style=\"font-size:12px;color:var(--txt3);\">Tap to sign in</div></div><div style=\"font-size:20px;color:var(--txt3);\">&#8250;</div></div>";}).join("");}
 
 function afterLogin(){if(isAdmin()){document.getElementById("bnav").style.display="none";A.show("scr-admin");return;}document.getElementById("bnav").style.display="block";
 if(isMentor()&&!document.getElementById("ni-mentor")){var row=document.getElementById("nav-row"),ni=document.createElement("div");ni.className="ni";ni.id="ni-mentor";ni.innerHTML="<div class=\"ni-ico\">&#128101;</div><div class=\"ni-lbl\">Mentees</div>";ni.onclick=function(){A.nav("scr-mentor",ni);};row.insertBefore(ni,document.getElementById("ni-ppl"));}
 if(!document.getElementById("ni-process")){var row2=document.getElementById("nav-row"),ni2=document.createElement("div");ni2.className="ni";ni2.id="ni-process";ni2.innerHTML="<div class=\"ni-ico\">&#128260;</div><div class=\"ni-lbl\">Process</div>";ni2.onclick=function(){A.nav("scr-process",ni2);};row2.insertBefore(ni2,document.getElementById("ni-ppl"));}
-updateHeaderAv();document.getElementById("m-name").textContent=me.name;document.getElementById("m-date").textContent=new Date().toLocaleDateString("en-NZ",{weekday:"short",day:"numeric",month:"short",year:"numeric"});document.getElementById("quote-wrap").innerHTML=renderQuote();curDateKey=today();A.show("scr-main");renderMain();renderBN();updateBadge();scheduleNotif();updateDateNav();}
+updateHeaderAv();document.getElementById("m-name").textContent=me.name;document.getElementById("m-date").textContent=new Date().toLocaleDateString("en-NZ",{weekday:"short",day:"numeric",month:"short",year:"numeric"});document.getElementById("quote-wrap").innerHTML=renderQuote();curDateKey=today();curDbDate=today();
+// Load debrief data for this user
+R("hip_v1/debriefs/"+me.id).on("value",function(snap){debriefs=snap.exists()?snap.val():{};if(vis()==="scr-debrief-list")A.renderDebriefList();});
+R("hip_v1/achievements/"+me.id).once("value").then(function(snap){earnedAchs=snap.exists()?snap.val():{};checkTripletPipeline(true);});
+// refreshRedRunnerState handles all RR UI — deterministic, works regardless of load order
+console.log("RR_MEMBER_LOGIN userId="+me.id+" role="+me.role+" rrDataLoaded="+rrDataLoaded+" rawTotal="+rrAllAssignments.length);
+var _myA=rrAllAssignments.filter(function(a){return a.userId===me.id;});
+console.log("RR_MEMBER_LOGIN myAssignmentCount="+_myA.length+" ids="+_myA.map(function(a){return a.id+"("+A.rrGetStatus(a)+")"}).join(","));
+cgDefs=(profiles[me.id]&&profiles[me.id].customGoals)?Object.values(profiles[me.id].customGoals):[];
+A._apLoadFromProfile(); // apply saved appearance after login
+A.show("scr-main");renderMain();renderBN();updateBadge();scheduleNotif();updateDateNav();
+// Refresh RR state now that me is set (data may already be loaded)
+refreshRedRunnerState();}
 
 function updateHeaderAv(){var p=profiles[me&&me.id]||me,el=document.getElementById("m-av");if(!el)return;if(p&&p.photo)el.innerHTML="<img src=\""+p.photo+"\" style=\"width:30px;height:30px;border-radius:50%;object-fit:cover;\">";else el.textContent=(p&&p.avatar)||"&#128142;";}
 function renderQuote(){var q=QUOTES[new Date().getDate()%QUOTES.length];return "<div class=\"qbanner\"><div class=\"qtxt\">\""+q.t+"\"</div><div class=\"qauth\">- "+q.a+"</div></div>";}
-function renderMain(){if(!me||isAdmin())return;if(curTab===0)renderToday();else if(curTab===1)renderWeek();else if(curTab===2)renderMonth();else renderYear();}
+function renderMain(){if(!me||isAdmin())return;if(curTab===0)renderToday();else if(curTab===1)renderWeek();else if(curTab===2)renderMonth();else renderYear();refreshRedRunnerState();}
 
 function updateDateNav(){
   var isToday=curDateKey===today();
@@ -1134,13 +3077,67 @@ function renderToday(){
   }).join("");
   var days=last7();
   document.getElementById("streak-bar").innerHTML=days.map(function(d2){var de=(h&&h[d2])||{},isT=d2===today(),isSel=d2===k&&!isToday,anyH=METRICS.some(function(m){var gl=g[m.key]||{qty:1,period:"daily"};return gl.period==="daily"&&(de[m.key]||0)>=gl.qty;}),anyA=METRICS.some(function(m){return (de[m.key]||0)>0;});return "<div class=\"sd"+(anyH?" hit":anyA?" part":"")+(isT?" tod":"")+"\" title=\""+fmtK(d2)+"\" style=\"cursor:pointer;"+(isSel?"border:2px solid var(--gold);":"")+"\" onclick=\"A.selectStreakDay('"+ d2+"')\"></div>";}).join("");
-  document.getElementById("ach-list").innerHTML=ACHS.map(function(a){var on=a.fn(h||{},g);return "<div class=\"aitem"+(on?" on":"")+"\" ><div class=\"a-ico\">"+a.ico+"</div><div class=\"a-name\">"+a.name+"</div><div class=\"a-desc\">"+a.desc+"</div></div>";}).join("");
+  var tripletOn=!!(earnedAchs&&earnedAchs.triplet_pipeline&&earnedAchs.triplet_pipeline.earned);
+document.getElementById("ach-list").innerHTML=ACHS.map(function(a){var on=a.fn(h||{},g);return "<div class=\"aitem"+(on?" on":"")+"\" ><div class=\"a-ico\">"+a.ico+"</div><div class=\"a-name\">"+a.name+"</div><div class=\"a-desc\">"+a.desc+"</div></div>";}).join("")+"<div class=\"aitem"+(tripletOn?" on":"")+"\" ><div class=\"a-ico\">&#128101;</div><div class=\"a-name\">Triplet Pipeline</div><div class=\"a-desc\">Have three candidates in your process at once</div></div>";
+  renderCGTrack();
 }
 
-function renderWeek(){var days=last7(),h=udata(me.id),g=myGoals();mkChart("ch-week","bar",days.map(function(k){return fmtK(k).split(",")[0];}),METRICS.map(function(m){return {label:m.label,data:days.map(function(k){return (h[k]&&h[k][m.key])||0;}),backgroundColor:m.color+"99",borderColor:m.color,borderWidth:2,borderRadius:4};}));var ws=METRICS.map(function(m){var gl=g[m.key]||{qty:1,period:"daily"},ad=days.filter(function(k){return k<=today();}).length,gq=gl.period==="daily"?gl.qty*ad:gl.qty,act=days.reduce(function(s,k){return s+((h[k]&&h[k][m.key])||0);},0);return "<div class=\"srow\"><div class=\"srow-l\">"+m.emoji+" "+m.label+"</div><div class=\"srow-r\" style=\"color:"+m.color+";\">"+act+(gq?" <span style=\"font-size:11px;color:var(--txt3);\">("+pct(act,gq)+"%)</span>":"")+"</div></div>";}).join("");document.getElementById("week-stats").innerHTML="<div class=\"card\">"+ws+"</div>";renderInlineBN("week-bn","weekly");}
+function renderWeek(){var days=last7(),h=udata(me.id),g=myGoals();mkChart("ch-week","bar",days.map(function(k){return fmtK(k).split(",")[0];}),METRICS.map(function(m){return {label:m.label,data:days.map(function(k){return (h[k]&&h[k][m.key])||0;}),backgroundColor:m.color+"99",borderColor:m.color,borderWidth:2,borderRadius:4};}));var ws=METRICS.map(function(m){var gl=g[m.key]||{qty:1,period:"daily"},ad=days.filter(function(k){return k<=today();}).length,gq=gl.period==="daily"?gl.qty*ad:gl.qty,act=days.reduce(function(s,k){return s+((h[k]&&h[k][m.key])||0);},0);return "<div class=\"srow\"><div class=\"srow-l\">"+m.emoji+" "+m.label+"</div><div class=\"srow-r\" style=\"color:"+m.color+";\">"+act+(gq?" <span style=\"font-size:11px;color:var(--txt3);\">("+pct(act,gq)+"%)</span>":"")+"</div></div>";}).join("");document.getElementById("week-stats").innerHTML="<div class=\"card\">"+ws+"</div>";renderInlineBN("week-bn","weekly");renderCGPeriod("week");}
 function renderInlineBN(elId, period){var el=document.getElementById(elId);if(!el)return;var analysis=analyseBNPeriod(me&&me.id,period);if(!analysis||!analysis.primary){el.innerHTML="<div style=\"background:rgba(61,214,140,.04);border:1px solid rgba(61,214,140,.2);border-radius:var(--r);padding:12px;margin-bottom:10px;\"><div style=\"font-size:12px;font-weight:800;color:var(--green);\">&#10003; No Persistent Bottleneck</div><div style=\"font-size:12px;color:var(--txt2);margin-top:4px;\">No consistent bottleneck detected. Keep it up!</div></div>";return;}var trendIco={"improving":"&#128200;","stable":"&#10145;","worsening":"&#128201;"};var trendCol={"improving":"var(--green)","stable":"var(--gold)","worsening":"var(--red)"};var html="<div class=\"bn-alert\" style=\"margin-bottom:10px;\"><div class=\"bn-title\">&#9888; Bottleneck Analysis <span style=\"font-size:10px;font-weight:600;color:var(--txt3);margin-left:4px;\">"+analysis.daysAnalysed+" active days</span></div><div style=\"margin-top:8px;\">";analysis.ranked.forEach(function(item,idx){html+="<div style=\"display:flex;align-items:center;gap:8px;margin-bottom:6px;\"><div style=\"font-size:11px;font-weight:800;color:var(--txt3);width:20px;\">#"+(idx+1)+"</div><div style=\"font-size:18px;width:24px;\">"+item.m.emoji+"</div><div style=\"flex:1;\"><div style=\"font-size:12px;font-weight:700;\">"+item.m.label+" <span style=\"color:"+trendCol[item.trend]+";font-size:10px;\">"+trendIco[item.trend]+" "+item.trend+"</span></div><div style=\"height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:3px;overflow:hidden;\"><div style=\"height:100%;width:"+item.freqPct+"%;background:"+item.m.color+";border-radius:2px;\"></div></div></div><div style=\"font-size:11px;font-weight:800;color:var(--txt2);width:36px;text-align:right;\">"+item.freqPct+"%</div></div>";});html+="</div>";if(analysis.noBNPct>0)html+="<div style=\"font-size:11px;color:var(--green);font-weight:700;margin-top:6px;\">&#10003; On track "+analysis.noBNPct+"% of active days</div>";html+="</div>";el.innerHTML=html;}
-function renderMonth(){var wks=last5w(),h=udata(me.id);var wkT=function(wk,key){var we=dk(new Date(+new Date(wk.slice(0,4)+"-"+wk.slice(4,6)+"-"+wk.slice(6,8))+6*86400000));return Object.keys(h).filter(function(k){return k>=wk&&k<=we&&k<=today();}).reduce(function(s,k){return s+((h[k]&&h[k][key])||0);},0);};mkChart("ch-month","line",wks.map(function(w){return "W"+fmtK(w).replace(/\w+,\s/,"");}),METRICS.map(function(m){return {label:m.label,data:wks.map(function(w){return wkT(w,m.key);}),borderColor:m.color,backgroundColor:m.color+"22",borderWidth:2,pointRadius:4,fill:true,tension:.4};}));var mdays=Object.keys(h).filter(function(k){return k.slice(0,6)===moOf().slice(0,6)&&k<=today();}),g=myGoals();var ms=METRICS.map(function(m){var gl=g[m.key]||{qty:1,period:"daily"},act=mdays.reduce(function(s,k){return s+((h[k]&&h[k][m.key])||0);},0),gq=gl.period==="daily"?gl.qty*mdays.length:gl.qty*4;return "<div class=\"srow\"><div class=\"srow-l\">"+m.emoji+" "+m.label+"</div><div class=\"srow-r\" style=\"color:"+m.color+";\">"+act+" <span style=\"font-size:11px;color:var(--txt3);\">("+pct(act,gq)+"%)</span></div></div>";}).join("");document.getElementById("month-stats").innerHTML="<div class=\"card\">"+ms+"</div>";renderInlineBN("month-bn","monthly");}
-function renderYear(){var mos=last6m(),h=udata(me.id);var moT=function(mk,key){return Object.keys(h).filter(function(k){return k.slice(0,6)===mk.slice(0,6)&&k<=today();}).reduce(function(s,k){return s+((h[k]&&h[k][key])||0);},0);};mkChart("ch-year","line",mos.map(function(mk){return MONS[parseInt(mk.slice(4,6))-1];}),METRICS.map(function(m){return {label:m.label,data:mos.map(function(mk){return moT(mk,m.key);}),borderColor:m.color,backgroundColor:m.color+"22",borderWidth:2,pointRadius:5,fill:true,tension:.4};}));var ydays=Object.keys(h).filter(function(k){return k.slice(0,4)===yrOf()&&k<=today();}),ys=METRICS.map(function(m){var act=ydays.reduce(function(s,k){return s+((h[k]&&h[k][m.key])||0);},0);return "<div class=\"srow\"><div class=\"srow-l\">"+m.emoji+" "+m.label+"</div><div class=\"srow-r\" style=\"color:"+m.color+";\">"+act+"</div></div>";}).join("");document.getElementById("year-stats").innerHTML="<div class=\"card\">"+ys+"</div>";renderInlineBN("year-bn","yearly");}
+function renderMonth(){var wks=last5w(),h=udata(me.id);var wkT=function(wk,key){var we=dk(new Date(+new Date(wk.slice(0,4)+"-"+wk.slice(4,6)+"-"+wk.slice(6,8))+6*86400000));return Object.keys(h).filter(function(k){return k>=wk&&k<=we&&k<=today();}).reduce(function(s,k){return s+((h[k]&&h[k][key])||0);},0);};mkChart("ch-month","line",wks.map(function(w){return "W"+fmtK(w).replace(/\w+,\s/,"");}),METRICS.map(function(m){return {label:m.label,data:wks.map(function(w){return wkT(w,m.key);}),borderColor:m.color,backgroundColor:m.color+"22",borderWidth:2,pointRadius:4,fill:true,tension:.4};}));var mdays=Object.keys(h).filter(function(k){return k.slice(0,6)===moOf().slice(0,6)&&k<=today();}),g=myGoals();var ms=METRICS.map(function(m){var gl=g[m.key]||{qty:1,period:"daily"},act=mdays.reduce(function(s,k){return s+((h[k]&&h[k][m.key])||0);},0),gq=gl.period==="daily"?gl.qty*mdays.length:gl.qty*4;return "<div class=\"srow\"><div class=\"srow-l\">"+m.emoji+" "+m.label+"</div><div class=\"srow-r\" style=\"color:"+m.color+";\">"+act+" <span style=\"font-size:11px;color:var(--txt3);\">("+pct(act,gq)+"%)</span></div></div>";}).join("");document.getElementById("month-stats").innerHTML="<div class=\"card\">"+ms+"</div>";renderInlineBN("month-bn","monthly");renderCGPeriod("month");}
+function renderYear(){var mos=last6m(),h=udata(me.id);var moT=function(mk,key){return Object.keys(h).filter(function(k){return k.slice(0,6)===mk.slice(0,6)&&k<=today();}).reduce(function(s,k){return s+((h[k]&&h[k][key])||0);},0);};mkChart("ch-year","line",mos.map(function(mk){return MONS[parseInt(mk.slice(4,6))-1];}),METRICS.map(function(m){return {label:m.label,data:mos.map(function(mk){return moT(mk,m.key);}),borderColor:m.color,backgroundColor:m.color+"22",borderWidth:2,pointRadius:5,fill:true,tension:.4};}));var ydays=Object.keys(h).filter(function(k){return k.slice(0,4)===yrOf()&&k<=today();}),ys=METRICS.map(function(m){var act=ydays.reduce(function(s,k){return s+((h[k]&&h[k][m.key])||0);},0);return "<div class=\"srow\"><div class=\"srow-l\">"+m.emoji+" "+m.label+"</div><div class=\"srow-r\" style=\"color:"+m.color+";\">"+act+"</div></div>";}).join("");document.getElementById("year-stats").innerHTML="<div class=\"card\">"+ys+"</div>";renderInlineBN("year-bn","yearly");renderCGPeriod("year");}
+
+
+function renderCGTrack(){
+  var wrap=document.getElementById("cg-track-wrap");
+  var list=document.getElementById("cg-track-list");
+  if(!wrap||!list)return;
+  var active=A.cgActiveDefs();
+  if(!active.length){wrap.style.display="none";return;}
+  wrap.style.display="block";
+  var k=curDateKey||today();
+  list.innerHTML=active.map(function(g){
+    var dayEntry=(customGoalData[k]&&customGoalData[k][g.id])||{value:0};
+    var val=dayEntry.value||0;
+    var pt=A.cgPeriodTotal(g.id,g.period);
+    var p2=pct(pt,g.targetQuantity);
+    var hit=pt>=g.targetQuantity,ov=pt>g.targetQuantity;
+    var dispVal=g.period==="daily"?val:pt;
+    var col=ov?"var(--gold)":hit?"var(--green)":"#5eaeff";
+    return "<div class=\"mc"+(hit?" hit":"")+(ov?" over":"")+" style=\"border-color:rgba(255,255,255,.1);\">"
+      +"<div class=\"mc-lbl\" style=\"font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">"+g.name+"</div>"
+      +"<div class=\"mc-val\" style=\"color:#5eaeff;\">"+dispVal+"</div>"
+      +"<div class=\"mc-gl\">Goal: "+g.targetQuantity+" "+g.period+"</div>"
+      +"<div class=\"mc-pct\" style=\"color:"+col+";\">"+p2+"%"+(ov?" &#11088;":"")+"</div>"
+      +"<div class=\"mc-bar\"><div class=\"mc-fill\" style=\"width:"+Math.min(100,p2)+"%;background:#5eaeff;\"></div></div>"
+      +"<div class=\"mc-btns\">"
+        +"<button class=\"mc-plus\" onclick=\"A.cgInc('"+g.id+"')\">"+(hit?"&#10003;":"+")+"</button>"
+        +"<button class=\"mc-min\" onclick=\"A.cgDec('"+g.id+"')\" "+(val===0?"disabled":"")+">&#8722;</button>"
+      +"</div>"
+    +"</div>";
+  }).join("");
+}
+
+function renderCGPeriod(period){
+  var elId={week:"cg-week-stats",month:"cg-month-stats",year:"cg-year-stats"}[period];
+  var el=document.getElementById(elId);if(!el)return;
+  var active=A.cgActiveDefs();
+  if(!active.length){el.innerHTML="";return;}
+  var rows=active.map(function(g){
+    var total=A.cgPeriodTotal(g.id,g.period);
+    var gq=g.targetQuantity;
+    if(g.period==="daily"){
+      var daysCount=1;
+      if(period==="week"){daysCount=last7().filter(function(k){return k<=today();}).length;}
+      else if(period==="month"){daysCount=Object.keys(customGoalData).filter(function(k){return k.slice(0,6)===moOf().slice(0,6)&&k<=today();}).length||1;}
+      else{daysCount=Object.keys(customGoalData).filter(function(k){return k.slice(0,4)===yrOf()&&k<=today();}).length||1;}
+      gq=g.targetQuantity*daysCount;
+    }
+    var p2=pct(total,gq);
+    return "<div class=\"srow\"><div class=\"srow-l\" style=\"color:#9898b8;\">"+g.name+"</div><div class=\"srow-r\" style=\"color:#5eaeff;\">"+total+" <span style=\"font-size:11px;color:var(--txt3);\">("+p2+"%)</span></div></div>";
+  }).join("");
+  el.innerHTML="<div class=\"sec\" style=\"margin-top:14px;\">Custom Goals</div><div class=\"card\">"+rows+"</div>";
+}
 
 function renderDash(){
   var ps=Object.values(profiles).filter(function(p){return p.role!=="mentor"&&p.role!=="admin";});
@@ -1202,9 +3199,11 @@ function renderProcess(){
   body.innerHTML=html;
 }
 
-function renderMentor(){if(!me||!isMentor())return;var body=document.getElementById("mentor-body"),pending=Object.entries(mentorLinks[me.id]||{}).filter(function(e){return e[1].status==="pending";}),linked=Object.entries(mentorLinks[me.id]||{}).filter(function(e){return e[1].status==="linked";});var html="";if(pending.length){html+="<div class=\"sec\" style=\"color:var(--purple);\">Pending Requests</div>";html+=pending.map(function(e){var p=profiles[e[0]]||{};return "<div style=\"display:flex;align-items:center;gap:10px;padding:12px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:var(--r2);margin-bottom:7px;\">"+avHtml(p,36)+"<div style=\"flex:1;\"><div style=\"font-size:14px;font-weight:700;\">"+(p.name||e[0])+"</div><div style=\"font-size:11px;color:var(--txt3);\">Awaiting acceptance</div></div><button onclick=\"A.removeMentorLink('"+me.id+"','"+e[0]+"')\" style=\"padding:5px 10px;background:rgba(232,69,90,.12);border:1px solid rgba(232,69,90,.25);color:var(--red);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;\">Cancel</button></div>";}).join("");}if(!linked.length&&!pending.length){body.innerHTML="<div class=\"empty\"><div class=\"empty-ico\">&#128101;</div><div class=\"empty-txt\">No key accounts linked yet.<br>Go to <b>People</b>, open a member profile,<br>and tap <b>Add as Key Account</b>.</div></div>";return;}if(linked.length){html+="<div class=\"sec\">Key Accounts</div>";html+=linked.map(function(e){var p=profiles[e[0]];if(!p)return "";var g=p.goals||DEF,h=udata(e[0]),bn=detectBN(e[0]),items=METRICS.map(function(m){var gl=g[m.key]||{qty:1,period:"daily"},a=periodTotal(e[0],m.key,gl.period),p2=pct(a,gl.qty);return {m:m,a:a,gl:gl,p2:p2};});var mdays=Object.keys(h).filter(function(k){return k.slice(0,6)===moOf().slice(0,6)&&k<=today();}),monthTots={};METRICS.forEach(function(m){monthTots[m.key]=mdays.reduce(function(s,k){return s+((h[k]&&h[k][m.key])||0);},0);});return "<div class=\"mentee-card\"><div class=\"mentee-name\">"+avHtml(p,32)+p.name+"<button style=\"margin-left:auto;padding:4px 10px;background:rgba(232,69,90,.1);border:1px solid rgba(232,69,90,.25);color:var(--red);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;\" onclick=\"A.removeMentorLink('"+me.id+"','"+e[0]+"')\">Remove</button></div>"+(bn?"<div style=\"font-size:11px;color:var(--red);margin-bottom:8px;font-weight:700;\">BN: "+bn.m.emoji+" "+bn.m.label+" ("+bn.p+"%)</div>":"<div style=\"font-size:11px;color:var(--green);margin-bottom:8px;font-weight:700;\">All on track today</div>")+"<div style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;\">"+items.map(function(x){return "<div style=\"background:var(--s3);border-radius:9px;padding:10px;\"><div style=\"font-size:11px;color:var(--txt3);font-weight:700;\">"+x.m.emoji+" "+x.m.label+"</div><div style=\"font-size:20px;font-weight:900;color:"+x.m.color+";margin:3px 0;\">"+x.a+"</div><div style=\"font-size:10px;color:"+(x.p2>=100?"var(--green)":"var(--txt3)")+";\">"+x.p2+"% of "+x.gl.qty+"/"+x.gl.period+"</div></div>";}).join("")+"</div><div style=\"font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;\">This Month</div><div style=\"display:flex;gap:10px;flex-wrap:wrap;\">"+METRICS.map(function(m){return "<span style=\"font-size:12px;font-weight:700;color:"+m.color+";\">"+m.emoji+" "+monthTots[m.key]+"</span>";}).join("")+"</div></div>";}).join("");}body.innerHTML=html;}
+function renderMentor(){if(!me||!isMentor())return;
+var body=document.getElementById("mentor-body"),pending=Object.entries(mentorLinks[me.id]||{}).filter(function(e){return e[1].status==="pending";}),linked=Object.entries(mentorLinks[me.id]||{}).filter(function(e){return e[1].status==="linked";});var html="";if(pending.length){html+="<div class=\"sec\" style=\"color:var(--purple);\">Pending Requests</div>";html+=pending.map(function(e){var p=profiles[e[0]]||{};return "<div style=\"display:flex;align-items:center;gap:10px;padding:12px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:var(--r2);margin-bottom:7px;\">"+avHtml(p,36)+"<div style=\"flex:1;\"><div style=\"font-size:14px;font-weight:700;\">"+(p.name||e[0])+"</div><div style=\"font-size:11px;color:var(--txt3);\">Awaiting acceptance</div></div><button onclick=\"A.removeMentorLink('"+me.id+"','"+e[0]+"')\" style=\"padding:5px 10px;background:rgba(232,69,90,.12);border:1px solid rgba(232,69,90,.25);color:var(--red);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;\">Cancel</button></div>";}).join("");}if(!linked.length&&!pending.length){body.innerHTML="<div class=\"empty\"><div class=\"empty-ico\">&#128101;</div><div class=\"empty-txt\">No key accounts linked yet.<br>Go to <b>People</b>, open a member profile,<br>and tap <b>Add as Key Account</b>.</div></div>";return;}if(linked.length){html+="<div class=\"sec\">Key Accounts</div>";html+=linked.map(function(e){var p=profiles[e[0]];if(!p)return "";var g=p.goals||DEF,h=udata(e[0]),bn=detectBN(e[0]),items=METRICS.map(function(m){var gl=g[m.key]||{qty:1,period:"daily"},a=periodTotal(e[0],m.key,gl.period),p2=pct(a,gl.qty);return {m:m,a:a,gl:gl,p2:p2};});var mdays=Object.keys(h).filter(function(k){return k.slice(0,6)===moOf().slice(0,6)&&k<=today();}),monthTots={};METRICS.forEach(function(m){monthTots[m.key]=mdays.reduce(function(s,k){return s+((h[k]&&h[k][m.key])||0);},0);});return "<div class=\"mentee-card\"><div class=\"mentee-name\">"+avHtml(p,32)+p.name+"<button style=\"margin-left:auto;padding:4px 10px;background:rgba(232,69,90,.1);border:1px solid rgba(232,69,90,.25);color:var(--red);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;\" onclick=\"A.removeMentorLink('"+me.id+"','"+e[0]+"')\">Remove</button></div>"+(bn?"<div style=\"font-size:11px;color:var(--red);margin-bottom:8px;font-weight:700;\">BN: "+bn.m.emoji+" "+bn.m.label+" ("+bn.p+"%)</div>":"<div style=\"font-size:11px;color:var(--green);margin-bottom:8px;font-weight:700;\">All on track today</div>")+"<div style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;\">"+items.map(function(x){return "<div style=\"background:var(--s3);border-radius:9px;padding:10px;\"><div style=\"font-size:11px;color:var(--txt3);font-weight:700;\">"+x.m.emoji+" "+x.m.label+"</div><div style=\"font-size:20px;font-weight:900;color:"+x.m.color+";margin:3px 0;\">"+x.a+"</div><div style=\"font-size:10px;color:"+(x.p2>=100?"var(--green)":"var(--txt3)")+";\">"+x.p2+"% of "+x.gl.qty+"/"+x.gl.period+"</div></div>";}).join("")+"</div><div style=\"font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;\">This Month</div><div style=\"display:flex;gap:10px;flex-wrap:wrap;\">"+METRICS.map(function(m){return "<span style=\"font-size:12px;font-weight:700;color:"+m.color+";\">"+m.emoji+" "+monthTots[m.key]+"</span>";}).join("")+"</div></div>";}).join("");}body.innerHTML=html;}
 
-function renderAdmin(){if(!isAdmin())return;document.getElementById("admin-list").innerHTML=Object.values(profiles).map(function(p){var roleBadge=isAdmin(p.id)?"<span class=\"admin-badge\">Admin</span>":isMentor(p.id)?"<span class=\"mentor-badge\">Mentor</span>":"<span style=\"font-size:9px;color:var(--txt3);font-weight:700;text-transform:uppercase;\">Member</span>";var isMe=p.id===me.id;return "<div class=\"acard\">"+avHtml(p,40)+"<div style=\"flex:1;min-width:0;\"><div style=\"font-size:14px;font-weight:800;margin-bottom:6px;\">"+p.name+" "+roleBadge+"</div><select style=\"padding:5px 8px;background:var(--s3);border:1px solid var(--bd);border-radius:7px;color:var(--txt);font-family:var(--ff);font-size:12px;outline:none;\" onchange=\"A.adminChangeRole('"+p.id+"',this.value)\" "+(isMe?"disabled":"")+"><option value=\"member\" "+(p.role==="member"?"selected":"")+">Member</option><option value=\"mentor\" "+(p.role==="mentor"?"selected":"")+">Mentor</option><option value=\"admin\" "+(p.role==="admin"?"selected":"")+">Admin</option></select></div>"+(isMe?"<div style=\"width:60px;\"></div>":"<button style=\"padding:7px 12px;background:rgba(232,69,90,.12);border:1px solid rgba(232,69,90,.25);color:var(--red);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;\" onclick=\"A.adminDeleteUser('"+p.id+"')\">Delete</button>")+"</div>";}).join("");}
+function renderAdmin(){if(!isAdmin())return;
+document.getElementById("admin-list").innerHTML=Object.values(profiles).map(function(p){var roleBadge=isAdmin(p.id)?"<span class=\"admin-badge\">Admin</span>":isMentor(p.id)?"<span class=\"mentor-badge\">Mentor</span>":"<span style=\"font-size:9px;color:var(--txt3);font-weight:700;text-transform:uppercase;\">Member</span>";var isMe=p.id===me.id;return "<div class=\"acard\">"+avHtml(p,40)+"<div style=\"flex:1;min-width:0;\"><div style=\"font-size:14px;font-weight:800;margin-bottom:6px;\">"+p.name+" "+roleBadge+"</div><select style=\"padding:5px 8px;background:var(--s3);border:1px solid var(--bd);border-radius:7px;color:var(--txt);font-family:var(--ff);font-size:12px;outline:none;\" onchange=\"A.adminChangeRole('"+p.id+"',this.value)\" "+(isMe?"disabled":"")+"><option value=\"member\" "+(p.role==="member"?"selected":"")+">Member</option><option value=\"mentor\" "+(p.role==="mentor"?"selected":"")+">Mentor</option><option value=\"admin\" "+(p.role==="admin"?"selected":"")+">Admin</option></select></div>"+(isMe?"<div style=\"width:60px;\"></div>":"<button style=\"padding:7px 12px;background:rgba(232,69,90,.12);border:1px solid rgba(232,69,90,.25);color:var(--red);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;\" onclick=\"A.adminDeleteUser('"+p.id+"')\">Delete</button>")+"</div>";}).join("");}
 
 function renderCRM(){
   if(!me)return;
@@ -1222,12 +3221,173 @@ function renderCRM(){
 function renderPeople(){if(!me)return;var incomingMentorReqs=Object.entries(mentorLinks||{}).filter(function(e){return e[1][me.id]&&e[1][me.id].status==="pending";}).map(function(e){return profiles[e[0]];}).filter(Boolean);var reqs=inReqs(),rs=document.getElementById("req-section"),rl=document.getElementById("req-list"),totalBadge=reqs.length+incomingMentorReqs.length;rs.style.display=(reqs.length||incomingMentorReqs.length)?"block":"none";if(rs.style.display==="block"){var html="";if(incomingMentorReqs.length){html+="<div class=\"sec\" style=\"color:var(--purple);\">Mentor Requests</div>";html+=incomingMentorReqs.map(function(p){return "<div class=\"rcard mcard\">"+avHtml(p,32)+"<div style=\"flex:1;\"><div style=\"font-size:14px;font-weight:700;\">"+p.name+"</div><div style=\"font-size:11px;color:var(--txt3);\">wants to be your mentor</div></div><div style=\"display:flex;gap:6px;\"><button class=\"racc\" onclick=\"A.acceptMentorReq('"+p.id+"')\">&#10003;</button><button class=\"rdec\" onclick=\"A.declineMentorReq('"+p.id+"')\">&#10005;</button></div></div>";}).join("");}if(reqs.length){html+="<div class=\"sec\" style=\"color:var(--red);\">Follow Requests</div>";html+=reqs.map(function(r){return "<div class=\"rcard\">"+avHtml(profiles[r.from]||{avatar:r.avatar},32)+"<div style=\"flex:1;\"><div style=\"font-size:14px;font-weight:700;\">"+r.name+"</div><div style=\"font-size:11px;color:var(--txt3);\">wants to follow you</div></div><div style=\"display:flex;gap:6px;\"><button class=\"racc\" onclick=\"A.acceptReq('"+r.from+"')\">&#10003;</button><button class=\"rdec\" onclick=\"A.declineReq('"+r.from+"')\">&#10005;</button></div></div>";}).join("");}rl.innerHTML=html;}renderPplList();updateBadge(totalBadge);}
 function renderPplList(){if(!me)return;var ps=Object.values(profiles).filter(function(p){return p.id!==me.id&&(isAdmin()||isMentor()||p.role!=="mentor")&&p.role!=="admin"&&p.name.toLowerCase().includes(pSearch);});if(pTab==="following")ps=ps.filter(function(p){return isFol(p.id);});if(pTab==="connected")ps=ps.filter(function(p){return isConn(p.id);});if(!ps.length){document.getElementById("ppl-list").innerHTML="<div class=\"empty\"><div class=\"empty-ico\">&#128100;</div><div class=\"empty-txt\">"+(pTab==="connected"?"No connections yet.":pTab==="following"?"Not following anyone yet.":"No members found.")+"</div></div>";return;}document.getElementById("ppl-list").innerHTML=ps.map(function(p){var fol=isFol(p.id),conn2=isConn(p.id),fbtn="";if(conn2)fbtn="<button class=\"fbtn conn\" onclick=\"A.removeConn('"+p.id+"')\">&#128279;</button>";else if(fol)fbtn="<button class=\"fbtn fing\" onclick=\"A.follow('"+p.id+"')\">Following</button>";else fbtn="<button class=\"fbtn fol\" onclick=\"A.follow('"+p.id+"')\">+ Follow</button>";var roleTag=isMentor(p.id)?"<span class=\"mentor-badge\">Mentor</span>":"";return "<div class=\"prow\" onclick=\"A.viewProfile('"+p.id+"')\">"+avHtml(p,36)+"<div style=\"flex:1;min-width:0;\"><div style=\"font-size:14px;font-weight:700;margin-bottom:3px;\">"+p.name+" "+roleTag+"</div></div>"+fbtn+"</div>";}).join("");}
 function updateBadge(n){if(!me)return;if(n===undefined){var pm=Object.entries(mentorLinks||{}).filter(function(e){return e[1][me.id]&&e[1][me.id].status==="pending";}).length;n=inReqs().length+pm;}var lbl=document.getElementById("req-lbl"),ni=document.getElementById("ni-ppl");if(lbl){lbl.style.display=n>0?"block":"none";lbl.textContent=n>0?n+" request"+(n>1?"s":""):"";}if(ni){var ex=ni.querySelector(".ni-dot");if(ex)ex.remove();if(n>0){var b=document.createElement("div");b.className="ni-dot";b.textContent=n;ni.appendChild(b);}}}
+function checkTripletPipeline(isLogin){
+  if(!me||isAdmin()||isMentor(me.id)){}// mentors still check — they earn on their OWN contacts
+  if(!me)return;
+  // Already earned — no action needed
+  if(earnedAchs&&earnedAchs.triplet_pipeline&&earnedAchs.triplet_pipeline.earned)return;
+  // Count ONLY this user's own CRM contacts in process
+  var myContacts=crmData[me.id]||{};
+  var inProcess=Object.values(myContacts).filter(function(c){
+    return c.stage!==undefined&&c.stage!==null;
+  });
+  if(inProcess.length>=3){
+    var now=Date.now();
+    var record={earned:true,earnedAt:now};
+    fbSet("hip_v1/achievements/"+me.id+"/triplet_pipeline",record).then(function(){
+      earnedAchs.triplet_pipeline=record;
+      renderToday();
+      // Show celebration — but only once per session
+      // isLogin=true means backfill on app open; show cel once then never again
+      showCel("&#128101;","Triplet Pipeline!","Great work! You now have three candidates actively progressing through your pipeline.");
+    }).catch(function(err){
+      console.warn("Failed to save Triplet Pipeline achievement:",err);
+    });
+  }
+}
+
+
+// ── RED RUNNER CENTRAL STATE FUNCTION ────────────────────────────────────────
+// Called whenever me or rrAllAssignments changes.
+// Derives role-specific views and updates all RR UI.
+// Safe to call multiple times — always derives fresh from rrAllAssignments.
+var _rrRenderCount=0; // diagnostic
+
+function rrGetScopedAssignments(){
+  // Returns assignments visible to the current user based on role
+  if(!me)return [];
+  return rrAllAssignments.filter(function(a){
+    if(!a||!a.userId)return false;
+    if(isAdmin())return true;
+    if(isMentor(me.id)&&a.allocatedByUserId===me.id)return true;
+    if(a.userId===me.id)return true;
+    if(isMentor(me.id)&&isMentorLinked(me.id,a.userId))return true;
+    return false;
+  });
+}
+
+function rrGetMyAssignments(){
+  // Returns ONLY the current member's own assignments
+  if(!me)return [];
+  return rrAllAssignments.filter(function(a){
+    return a&&a.userId===me.id;
+  });
+}
+
+function refreshRedRunnerState(){
+  // ── Guard ───────────────────────────────────────────────────────────────────
+  // If neither user nor data is ready, clear RR UI and return
+  if(!me||!rrDataLoaded){
+    clearRRUI();
+    return;
+  }
+
+  console.log("RR_REFRESH me="+me.id+" role="+me.role+" rawTotal="+rrAllAssignments.length+" dataLoaded="+rrDataLoaded);
+
+  // ── Admin / Mentor management screen ────────────────────────────────────────
+  if(vis()==="scr-rr-admin"){
+    _rrRenderCount++;
+    console.log("RR_ADMIN_RENDER #"+_rrRenderCount+" scoped="+rrGetScopedAssignments().length);
+    A.rrRenderListInternal(rrGetScopedAssignments());
+  }
+
+  // ── Member Red Runner theme ──────────────────────────────────────────────────
+  // Only applies to Member / Mentor roles (not Admin who has no tracker)
+  if(!isAdmin()){
+    applyRRTheme(rrGetMyAssignments());
+  }
+}
+
+function clearRRUI(){
+  // Remove any RR theme without touching persistent data
+  var app=document.getElementById("app");
+  if(app)app.classList.remove("rr-active");
+  var hdr=document.getElementById("rr-today-header");
+  if(hdr)hdr.innerHTML="";
+  var mAv=document.getElementById("m-av");
+  if(mAv)mAv.style.boxShadow="";
+}
+
+// ── RED RUNNER THEME APPLICATION ──────────────────────────────────────────────
+function applyRRTheme(myAssignments){
+  // myAssignments: the current member's own assignments (pre-filtered by rrGetMyAssignments)
+  if(!me||isAdmin())return;
+  myAssignments=myAssignments||rrGetMyAssignments();
+
+  // Find current and upcoming from MY OWN assignments
+  var active=null,upcoming=null;
+  myAssignments.forEach(function(a){
+    var st=A.rrGetStatus(a);
+    if(st==="current"&&!active)active=a;
+    if(st==="upcoming"&&!upcoming)upcoming=a;
+  });
+  var relevant=active||upcoming;
+
+  console.log("RR_THEME_APPLY me="+me.id+" active="+(active?active.id:"none")+" upcoming="+(upcoming?upcoming.id:"none"));
+
+  var app=document.getElementById("app");
+  if(!app)return;
+  // rr-active class only when current
+  app.classList.toggle("rr-active",!!active);
+
+  // Today header card
+  var rrHdrEl=document.getElementById("rr-today-header");
+  if(relevant&&curTab===0){
+    if(!rrHdrEl){
+      rrHdrEl=document.createElement("div");
+      rrHdrEl.id="rr-today-header";
+      var todayGrid=document.getElementById("today-grid");
+      if(todayGrid&&todayGrid.parentNode){
+        todayGrid.parentNode.insertBefore(rrHdrEl,todayGrid);
+      }
+    }
+    var rrHdrCard=document.createElement("div");
+    rrHdrCard.className="rr-header-wrap";
+    rrHdrCard.style.cssText="margin-bottom:12px;cursor:pointer;";
+    rrHdrCard.onclick=function(){A.show("scr-rr-member");};
+    var innerContent="";
+    if(active){
+      var wk=A.rrCurrentWeek(active);
+      var daysRem=A.rrDaysRemaining(active);
+      innerContent="<div class='rr-badge'>&#9679; RED RUNNER</div>"+
+        "<div style='font-size:15px;font-weight:800;color:var(--rr-text);'>Week "+wk+" — "+(daysRem===0?"Ends today":daysRem+" days remaining")+"</div>"+
+        "<div style='font-size:11px;color:var(--rr-muted);margin-top:4px;'>"+active.startDate+" to "+active.endDate+"</div>";
+    }else if(upcoming){
+      var daysUntil=A.rrDaysUntilStart(upcoming);
+      innerContent="<div class='rr-badge' style='background:rgba(192,17,43,.4);'>&#9651; UPCOMING RED RUNNER</div>"+
+        "<div style='font-size:15px;font-weight:800;color:var(--rr-text);'>Starts in "+daysUntil+" day"+(daysUntil!==1?"s":"")+"</div>"+
+        "<div style='font-size:11px;color:var(--rr-muted);margin-top:4px;'>"+upcoming.startDate+" to "+upcoming.endDate+"</div>";
+    }
+    rrHdrCard.innerHTML="<div class='rr-header-bg'></div><div class='rr-header-content' style='padding:14px 16px 12px;'>"+innerContent+"</div>";
+    rrHdrEl.innerHTML="";
+    rrHdrEl.appendChild(rrHdrCard);
+  }else if(rrHdrEl){
+    rrHdrEl.innerHTML="";
+  }
+
+  // Avatar glow — current only
+  var mAv=document.getElementById("m-av");
+  if(mAv){
+    mAv.style.boxShadow=active?"0 0 0 3px var(--rr-bright), 0 0 12px var(--rr-glow)":"";
+    mAv.style.borderRadius="50%";
+  }
+}
+
+
 function showCel(ico,ttl,msg){document.getElementById("c-ico").innerHTML=ico;document.getElementById("c-ttl").textContent=ttl;document.getElementById("c-msg").textContent=msg;document.getElementById("cel").style.display="flex";}
 function mkChart(id,type,labels,datasets){if(charts[id]){charts[id].destroy();delete charts[id];}var ctx=document.getElementById(id);if(!ctx)return;charts[id]=new Chart(ctx,{type:type,data:{labels:labels,datasets:datasets},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:"#9898b8",font:{size:10},boxWidth:10}}},scales:{x:{ticks:{color:"#4e4e6e",font:{size:9}},grid:{color:"rgba(255,255,255,.04)"}},y:{ticks:{color:"#4e4e6e",font:{size:9}},grid:{color:"rgba(255,255,255,.04)"},beginAtZero:true}}}});}
 function buildPad(id,mode){var keys=["1","2","3","4","5","6","7","8","9","","0","X"];document.getElementById(id).innerHTML=keys.map(function(k){return "<button class=\"pk"+(k===""?" emp":"")+"\" "+(k?"onclick=\"A.pinPress('"+k+"','"+mode+"')\"":"")+" style=\""+(k==="X"?"font-size:14px;color:var(--txt2);":"")+"\"> "+(k==="X"?"&#9003;":k)+"</button>";}).join("");}
 function dotsFill(id,n){var el=document.getElementById(id);if(!el)return;el.querySelectorAll(".pd").forEach(function(d,i){d.classList.toggle("on",i<n);});}
 document.getElementById("av-picker").addEventListener("click",function(e){var t=e.target.closest(".av-opt");if(!t)return;document.querySelectorAll("#av-picker .av-opt").forEach(function(a){a.classList.remove("sel");});t.classList.add("sel");selAv=t.dataset.v;});
 document.getElementById("s-av-picker").addEventListener("click",function(e){var t=e.target.closest(".av-opt");if(!t)return;document.querySelectorAll("#s-av-picker .av-opt").forEach(function(a){a.classList.remove("sel");});t.classList.add("sel");sAv=t.dataset.v;});
+// System theme listener — responds when device setting changes
+if(window.matchMedia){
+  window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(){
+    if(A._apPref()==='system')A._apApply('system');
+  });
+}
+// Boot: re-apply so toggle button and buttons are correct after JS loads
+A._apApply();
 document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&me&&!isAdmin()){// If the date has changed (past midnight), reset to today
 if(curDateKey&&curDateKey!==today()){/* keep selected date */}
 document.getElementById("m-date").textContent=new Date().toLocaleDateString("en-NZ",{weekday:"short",day:"numeric",month:"short",year:"numeric"});document.getElementById("quote-wrap").innerHTML=renderQuote();if(curTab===0){if(!curDateKey)curDateKey=today();updateDateNav();renderToday();}renderBN();}});

@@ -620,7 +620,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     <div style="margin-bottom:14px;"><label class="lbl">Full Name *</label><input class="inp" id="crm-fname" placeholder="e.g. John Smith" maxlength="60"></div>
     <div style="margin-bottom:14px;"><label class="lbl">Phone</label><input class="inp" id="crm-phone" placeholder="+64 21 000 0000" maxlength="30" type="tel"></div>
     <div style="margin-bottom:14px;"><label class="lbl">Email</label><input class="inp" id="crm-email" placeholder="john@example.com" maxlength="80" type="email"></div>
-    <div style="margin-bottom:14px;"><label class="lbl">Notes / Where We Met</label><textarea class="inp" id="crm-note" placeholder="e.g. Met at Hamilton Business Expo..." rows="4" style="resize:none;"></textarea></div>
+    <div style="margin-bottom:14px;"><label class="lbl">Notes / Where We Met</label><div class="stt-wrap"><textarea class="inp db-ta-stt" id="crm-note" placeholder="e.g. Met at Hamilton Business Expo..." rows="4" style="resize:none;padding-bottom:36px;"></textarea><button type="button" class="stt-btn" id="stt-btn-crm-note" onclick="A.sttToggle('crm-note')" aria-label="Start voice input for Notes">&#127908;</button><div class="stt-status" id="stt-status-crm-note"></div></div></div>
     <div style="margin-bottom:14px;"><label class="lbl">Follow-up Reminder Date</label><input class="inp" type="date" id="crm-reminder"></div>
     <div style="margin-bottom:14px;" id="crm-process-btn-wrap"><button class="btn btn-purple btn-w" id="crm-process-btn" style="display:none;"></button></div>
     <div style="display:flex;gap:10px;"><button class="btn btn-p btn-w" onclick="A.saveCRM()">Save Contact</button><button class="btn btn-g" id="crm-del-btn" onclick="A.deleteCRM()" style="display:none;color:var(--red);">Delete</button></div>
@@ -1420,6 +1420,8 @@ if(id==="scr-rr-admin"){
 if(id==="scr-rr-member")A.rrRenderMemberView();
 if(id==="scr-debrief-list"){A.sttStopAll();A.renderDebriefList();}
 if(id==="scr-debrief"&&curDbDate){A.renderDebrief(curDbDate);A._sttInitButtons();}
+if(id==="scr-crm-edit"){setTimeout(function(){A._sttInitButtons();},50);}
+if(id!=="scr-crm-edit"&&id!=="scr-debrief"){A.sttStopAll();}
 },
 goBack:function(){A.show(prevScr||(me?isAdmin()?"scr-admin":"scr-main":"scr-login"));},
 nav:function(id,el){document.querySelectorAll(".ni").forEach(function(n){n.classList.remove("on");});el.classList.add("on");A.show(id);},
@@ -2854,11 +2856,13 @@ rrRenderMemberView:function(){
 // ── SPEECH-TO-TEXT ─────────────────────────────────────────────────────────────
 // Browser API detection
 _sttSupported:(function(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}()),
+
 // Active session state
 _sttInst:null,        // current SpeechRecognition instance
 _sttField:null,       // field ID currently listening
-_sttFinal:"",         // committed transcript so far this session
+_sttFinal:"",         // committed final transcript so far this session
 _sttBaseText:"",      // text that was in the field before listening started
+_sttPendingFinal:"",  // transcript committed by onresult but not yet saved to Firebase
 
 sttToggle:function(fieldId){
   if(!A._sttSupported){
@@ -2883,6 +2887,7 @@ sttStart:function(fieldId){
 
   A._sttField=fieldId;
   A._sttFinal="";
+  A._sttPendingFinal="";
   A._sttBaseText=ta.value||""; // preserve existing content
   A._sttInst=new SR();
 
@@ -2896,20 +2901,23 @@ sttStart:function(fieldId){
   A._sttSetStatus(fieldId,"Listening\u2026","listening");
 
   rec.onresult=function(e){
-    var interim="",final_="";
+    var interim="",newFinal="";
+    // Only iterate from e.resultIndex — do NOT reprocess already-committed results
     for(var i=e.resultIndex;i<e.results.length;i++){
       var t=e.results[i][0].transcript;
-      if(e.results[i].isFinal){final_+=t;}
+      if(e.results[i].isFinal){newFinal+=t;}
       else{interim+=t;}
     }
-    if(final_){A._sttFinal+=final_;}
-    // Show committed + interim in field without triggering full save
-    var combined=(A._sttBaseText+(A._sttBaseText&&(A._sttFinal||interim)?" ":"")+(A._sttFinal+interim)).trim();
-    ta.value=combined;
-    // Trigger dbChange for autosave only on final segments
-    if(final_){
-      dbDraft[fieldId.replace("db-","")]=ta.value;
-      A.dbAutoSave();
+    if(newFinal){
+      A._sttFinal+=newFinal;
+      A._sttPendingFinal=A._sttFinal; // mark as needing save
+    }
+    // Write display value: base + committed finals + current interim
+    var sep=(A._sttBaseText&&(A._sttFinal||interim))?" ":"";
+    ta.value=(A._sttBaseText+sep+(A._sttFinal+interim)).trim();
+    // Autosave on new final text only
+    if(newFinal){
+      A._sttSaveToField(fieldId,ta.value);
     }
   };
 
@@ -2929,15 +2937,14 @@ sttStart:function(fieldId){
   };
 
   rec.onend=function(){
-    // Session ended (may be natural end or stop called)
+    // BUG-007 FIX: do NOT re-write ta.value here — onresult already wrote it.
+    // Only clean up state and save to Firebase if there is uncommitted final text.
     if(A._sttField===fieldId){
-      // Commit final text to draft if not already done
       var ta2=document.getElementById(fieldId);
-      if(ta2&&A._sttFinal){
-        var committed=(A._sttBaseText+(A._sttBaseText&&A._sttFinal?" ":"")+(A._sttFinal)).trim();
-        ta2.value=committed;
-        dbDraft[fieldId.replace("db-","")]=committed;
-        A.dbAutoSave();
+      // ta2.value is already correct from onresult — only save to Firebase if needed
+      if(ta2&&A._sttPendingFinal){
+        A._sttSaveToField(fieldId,ta2.value);
+        A._sttPendingFinal="";
       }
       A._sttSetBtn(fieldId,false);
       if(A._sttFinal){
@@ -2959,20 +2966,32 @@ sttStart:function(fieldId){
   }
 },
 
+// ── Reusable save helper — works for both Debrief and CRM Notes ──────────────
+// fieldId may be a Debrief field (db-aX) or CRM notes field (crm-note)
+_sttSaveToField:function(fieldId,value){
+  if(fieldId.startsWith("db-")){
+    // Debrief field — save to dbDraft
+    var key=fieldId.replace("db-","");
+    if(dbDraft)dbDraft[key]=value;
+    A.dbAutoSave&&A.dbAutoSave();
+  }else if(fieldId==="crm-note"){
+    // CRM notes — nothing to save to draft; typing triggers CRM form directly
+    // The textarea value is already correct; no separate draft object for CRM
+  }
+},
+
 sttStop:function(clearStatus){
   if(A._sttInst){
     try{A._sttInst.stop();}catch(e){}
   }
-  // onend will fire and clean up — just clear UI if forced
   if(clearStatus!==false){
     var fid=A._sttField;
     if(fid){A._sttSetBtn(fid,false);A._sttSetStatus(fid,"","");}
-    A._sttField=null;A._sttInst=null;A._sttFinal="";
+    A._sttField=null;A._sttInst=null;A._sttFinal="";A._sttPendingFinal="";
   }
 },
 
 sttStopAll:function(){
-  // Called on logout, screen change, or debrief close
   if(A._sttInst||A._sttField){A.sttStop(true);}
 },
 
@@ -2993,7 +3012,7 @@ _sttSetStatus:function(fieldId,msg,cls){
 
 _sttInitButtons:function(){
   // On debrief open: hide buttons if not supported, show if supported
-  var fields=["db-a1","db-a3","db-a4","db-a6","db-a7","db-a9","db-a11","db-a12"];
+  var fields=["db-a1","db-a3","db-a4","db-a6","db-a7","db-a9","db-a11","db-a12","crm-note"];
   var supported=A._sttSupported;
   fields.forEach(function(fid){
     var btn=document.getElementById("stt-btn-"+fid);
